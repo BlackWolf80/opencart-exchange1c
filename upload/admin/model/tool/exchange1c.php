@@ -483,6 +483,8 @@ class ModelToolExchange1c extends Model {
 							'sort_order' => 0
 						);
 					}
+				} else {
+					$data['image'] = 'no_image.jpg';
 				}
 
 				if($product->ХарактеристикиТовара){
@@ -500,6 +502,42 @@ class ModelToolExchange1c extends Model {
 				if ($product->Группы) $data['category_1c_id'] = $product->Группы->Ид;
 				if ($product->Описание) $data['description'] = (string)$product->Описание;
 				if ($product->Статус) $data['status'] = (string)$product->Статус;
+
+				if ($product->Изготовитель) {
+					$manufacturer_name = $product->Изготовитель->Наименование;
+					$query = $this->db->query("SELECT manufacturer_id FROM ". DB_PREFIX ."manufacturer WHERE name='". $manufacturer_name ."'");
+					
+					if ($query->num_rows) {
+						$data['manufacturer_id'] = $query->row['manufacturer_id'];
+					}
+					else {
+				        	$data_manufacturer = array(
+							'name' => $manufacturer_name,
+							'keyword' => '',
+							'sort_order' => 0,
+							'manufacturer_store' => array(0 => 0)
+                        			);
+
+						$data_manufacturer['manufacturer_description'] = array(
+						$language_id => array(
+							'meta_keyword' => '',
+							'meta_description' => '',
+							'description' => '',
+							'seo_title' => '',
+							'seo_h1' => ''
+							),
+						);
+
+						$manufacturer_id = $this->model_catalog_manufacturer->addManufacturer($data_manufacturer);
+						$data['manufacturer_id'] = $manufacturer_id;
+
+						//только если тип 'translit'
+						if ($this->config->get('exchange1c_seo_url') == 2) {
+							$man_name = "brand-" . $manufacturer_name;
+							$this->setSeoURL('manufacturer_id', $manufacturer_id, $man_name);
+						}
+					}
+                		}
 
 				// Свойства продукта
 				if ($product->ЗначенияСвойств) {
@@ -524,42 +562,6 @@ class ModelToolExchange1c extends Model {
 
 							switch ($attribute['name']) {
 
-								case 'Производитель':
-									$manufacturer_name = $attribute_value;
-									$query = $this->db->query("SELECT manufacturer_id FROM ". DB_PREFIX ."manufacturer WHERE name='". $manufacturer_name ."'");
-
-									if ($query->num_rows) {
-										$data['manufacturer_id'] = $query->row['manufacturer_id'];
-									}
-									else {
-										$data_manufacturer = array(
-											'name' => $manufacturer_name,
-											'keyword' => '',
-											'sort_order' => 0,
-											'manufacturer_store' => array(0 => 0)
-										);
-
-										$data_manufacturer['manufacturer_description'] = array(
-											$language_id => array(
-												'meta_keyword' => '',
-												'meta_description' => '',
-												'description' => '',
-												'seo_title' => '',
-												'seo_h1' => ''
-											),
-										);
-
-										$manufacturer_id = $this->model_catalog_manufacturer->addManufacturer($data_manufacturer);
-										$data['manufacturer_id'] = $manufacturer_id;
-
-										//только если тип 'translit'
-										if ($this->config->get('exchange1c_seo_url') == 2) {
-											$man_name = "brand-" . $manufacturer_name;
-											$this->setSeoURL('manufacturer_id', $manufacturer_id, $man_name);
-										}
-									}
-								break;
-
 								case 'oc.seo_h1':
 									$data['seo_h1'] = $attribute_value;
 								break;
@@ -572,6 +574,10 @@ class ModelToolExchange1c extends Model {
 									$data['sort_order'] = $attribute_value;
 								break;
 
+								case 'MPN':
+									$data['mpn'] = $attribute_value;
+								break;
+								
 								default:
 									$data['product_attribute'][] = array(
 										'attribute_id'			=> $attribute['id'],
@@ -600,6 +606,10 @@ class ModelToolExchange1c extends Model {
 
 							case 'ОписаниеВФорматеHTML':
 								$data['description'] = $requisite->Значение ? (string)$requisite->Значение : '';
+							break;
+
+							case 'Полное наименование':
+								$data['meta_description'] = $requisite->Значение ? (string)$requisite->Значение : '';
 							break;
 						}
 					}
