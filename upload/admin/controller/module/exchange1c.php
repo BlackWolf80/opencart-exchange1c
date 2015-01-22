@@ -444,16 +444,16 @@ class ControllerModuleExchange1c extends Controller {
 		// Проверяем естль ли БД для хранения промежуточных данных.
 		$this->model_tool_exchange1c->checkDbSheme();
 		
-		// Очищаем таблицы
-		$this->model_tool_exchange1c->flushDb(array(
-			'product' 		=> $this->config->get('exchange1c_flush_product'),
-			'category'		=> $this->config->get('exchange1c_flush_category'),
-			'manufacturer'	=> $this->config->get('exchange1c_flush_manufacturer'),
-			'attribute'		=> $this->config->get('exchange1c_flush_attribute'),
-			'full_log'		=> $this->config->get('exchange1c_full_log'),
-			'apply_watermark'	=> $this->config->get('exchange1c_apply_watermark'),
-			'quantity'		=> $this->config->get('exchange1c_flush_quantity')
-		));
+//		// Очищаем таблицы
+//		$this->model_tool_exchange1c->flushDb(array(
+//			'product' 		=> $this->config->get('exchange1c_flush_product'),
+//			'category'		=> $this->config->get('exchange1c_flush_category'),
+//			'manufacturer'	=> $this->config->get('exchange1c_flush_manufacturer'),
+//			'attribute'		=> $this->config->get('exchange1c_flush_attribute'),
+//			'full_log'		=> $this->config->get('exchange1c_full_log'),
+//			'apply_watermark'	=> $this->config->get('exchange1c_apply_watermark'),
+//			'quantity'		=> $this->config->get('exchange1c_flush_quantity')
+//		));
 
 		$limit = 100000 * 1024;
 	
@@ -556,6 +556,8 @@ class ControllerModuleExchange1c extends Controller {
 		// Определяем текущую локаль
 		$language_id = $this->model_tool_exchange1c->getLanguageId($this->config->get('config_language'));
 
+        $this->log->write('Имя файла: ' . $filename);
+        
 		if (strpos($filename, 'import') !== false) {
 			
 			$this->model_tool_exchange1c->parseImport($filename, $language_id);
@@ -566,9 +568,13 @@ class ControllerModuleExchange1c extends Controller {
             // Только если выбран способ deadcow_seo
 			if ($this->config->get('exchange1c_seo_url') == 1) {
 				$this->load->model('module/deadcow_seo');
-				$this->model_module_deadcow_seo->generateCategories($this->config->get('deadcow_seo_categories_template'), 'Russian');
-				$this->model_module_deadcow_seo->generateProducts($this->config->get('deadcow_seo_products_template'), 'Russian');
-				$this->model_module_deadcow_seo->generateManufacturers($this->config->get('deadcow_seo_manufacturers_template'), 'Russian');
+				$this->model_module_deadcow_seo->generateCategories($this->config->get('deadcow_seo_categories_template'), '', 'Russian', true, true);
+				$this->model_module_deadcow_seo->generateProducts($this->config->get('deadcow_seo_products_template'), '.html', 'Russian', true, true);
+				$this->model_module_deadcow_seo->generateManufacturers($this->config->get('deadcow_seo_manufacturers_template'), '', 'Russian', true, true);
+				
+                $this->model_module_deadcow_seo->generateProductsMetaKeywords($this->config->get('deadcow_seo_meta_template'), $this->config->get('deadcow_seo_yahoo_id'), 'Russian', false);
+                $this->model_module_deadcow_seo->generateTags($this->config->get('deadcow_seo_tags_template'), 'Russian', false);
+				$this->model_module_deadcow_seo->generateCategoriesMetaKeywords($this->config->get('deadcow_seo_categories_template'), 'Russian');
 			}
 
 			if (!$manual) {
@@ -607,7 +613,7 @@ class ControllerModuleExchange1c extends Controller {
 
 		$this->load->model('tool/exchange1c');
 
-		$orders = $this->model_tool_exchange1c->queryOrders(array(
+        $orders = $this->model_tool_exchange1c->queryOrders(array(
 			 'from_date' 	=> $this->config->get('exchange1c_order_date')
 			,'exchange_status'	=> $this->config->get('exchange1c_order_status_to_exchange')
 			,'new_status'	=> $this->config->get('exchange1c_order_status')
