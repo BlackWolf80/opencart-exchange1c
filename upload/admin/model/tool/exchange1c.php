@@ -326,8 +326,15 @@ class ModelToolExchange1c extends Model {
 					if ($offer->Склад) {
 						if (!isset($data['quantity']))
 							$data['quantity'] = 0;
+							$data['product_quantity'] = array();
 						if (isset($this->WAREHOUSES[(string)$offer->Склад['ИдСклада']]['name'])) {
-							$this->log->write('Склад [UUID]:'.(string)$offer->Склад['ИдСклада'].', наименование:'.$this->WAREHOUSES[(string)$offer->Склад['ИдСклада']]['name'] . ', остаток:' . $offer->Склад['КоличествоНаСкладе']);
+							$quantity = (int)$offer->Склад['КоличествоНаСкладе'];
+							$this->log->write('Склад [UUID]:'.(string)$offer->Склад['ИдСклада'].', наименование:'.$this->WAREHOUSES[(string)$offer->Склад['ИдСклада']]['name'] . ', остаток:' . $quantity);
+							$data['product_quantity'][] = array(
+								'warehouse_id' => $this->WAREHOUSES[(string)$offer->Склад['ИдСклада']]['id'],
+								'1c_id' => (string)$offer->Склад['ИдСклада'],
+								'quantity' => $quantity
+							);
 						}
 						$data['quantity'] += isset($offer->Склад['КоличествоНаСкладе']) ? (int)$offer->Склад['КоличествоНаСкладе'] : 0;
 					}
@@ -346,7 +353,6 @@ class ModelToolExchange1c extends Model {
 					foreach ($offer->ХарактеристикиТовара->ХарактеристикаТовара as $i => $opt) {
 						$name_1c = (string)$opt->Наименование;
 						$value_1c = (string)$opt->Значение;
-						$price_1c = (int)$opt->Цена;
 	
 						if (!empty($name_1c) && !empty($value_1c)) {
 							
@@ -359,7 +365,6 @@ class ModelToolExchange1c extends Model {
 							}
 							
 							if ($enable_log) $this->log->write(" Найдены характеристики: " . $name_1c . " -> " . $value_1c);
-                            if ($enable_log) $this->log->write(" -> Цена: " . isset($price_1c) ? (int)$price_1c : 0);
 	
 							$option_id = $this->setOption($name_1c);
 							
@@ -370,8 +375,7 @@ class ModelToolExchange1c extends Model {
 								'product_option_value_id' => '',
 								'quantity'                => isset($data['quantity']) ? (int)$data['quantity'] : 0,
 								'subtract'                => 0,
-								//'price'                   => isset($data['price']) ? (int)$data['price'] : 0,
-                                'price'                   => (isset($data['price']) ? (int)$data['price'] : 0) + (isset($price_1c) ? (int)$price_1c : 0),
+								'price'                   => isset($data['price']) ? (int)$data['price'] : 0,
 								'price_prefix'            => '+',
 								'points'                  => 1,
 								'points_prefix'           => '+',
@@ -415,7 +419,6 @@ class ModelToolExchange1c extends Model {
 					}
 				}
 
-                //var_dump($data['product_option']);
 				if (!$exchange1c_relatedoptions || $new_product) {
 					
 					if ($offer->СкидкиНаценки) {
@@ -460,7 +463,7 @@ class ModelToolExchange1c extends Model {
 		if ($enable_log)
 			$this->log->write("Окончен разбор файла: " . $filename );
 
-	}
+	} // parseOffers()
 	
 	private function setOption($name){
 		$lang_id = (int)$this->config->get('config_language_id');
@@ -502,9 +505,12 @@ class ModelToolExchange1c extends Model {
 	public function parseImport($filename, $language_id) {
 
 		$importFile = DIR_CACHE . 'exchange1c/' . $filename;
-
+		
 		$enable_log = $this->config->get('exchange1c_full_log');
 		$apply_watermark = $this->config->get('exchange1c_apply_watermark');
+
+		if ($enable_log)
+			$this->log->write('ParseImport: Начало разбора файла: ' . $filename);
 
 		$xml = simplexml_load_file($importFile);
 		$data = array();
@@ -512,11 +518,14 @@ class ModelToolExchange1c extends Model {
 		// Версия XML
 		if ($xml) {
 			$this->VERSION_XML = (string)$xml['ВерсияСхемы'];
-			$this->log->write('Версия схемы: '.$this->VERSION_XML);
+			$this->log->write('ParseImport: Версия схемы: '.$this->VERSION_XML);
 		}
 		
+		// Кириллов В.Е. {
 		// Каталог не содержит изменений (полная выгрузка)
 		if((string)$xml->Каталог['СодержитТолькоИзменения']  == 'false') {
+			if ($enable_log)
+				$this->log->write('ParseImport: XML не содержит изменения, очищаем каталог');
     		// Очищаем таблицы
     		$this->flushDb(array(
     			'product' 		=> $this->config->get('exchange1c_flush_product'),
@@ -527,17 +536,29 @@ class ModelToolExchange1c extends Model {
     			'apply_watermark'	=> $this->config->get('exchange1c_apply_watermark'),
     			'quantity'		=> $this->config->get('exchange1c_flush_quantity')
     		));
+		} else {
+			if ($enable_log)
+				$this->log->write('ParseImport: XML содержит изменения, обновляем каталог');
 		}
+		// }
 		
 		// Группы
+		if ($enable_log) 
+			$this->log->write('ParseImport: Загрузка категорий');
 		if($xml->Классификатор->Группы) $this->insertCategory($xml->Классификатор->Группы->Группа, 0, $language_id);
 
 		// Свойства
+		if ($enable_log)
+			$this->log->write('ParseImport: Загрузка Свойств');
 		if ($xml->Классификатор->Свойства) $this->insertAttribute($xml->Классификатор->Свойства->Свойство);
+		$this->log->write('В базу загружены свойства:');
+		$this->log->write($this->PROPERTIES);
 
 		$this->load->model('catalog/manufacturer');
 
 		// Товары
+		if ($enable_log)
+			$this->log->write('ParseImport: Загрузка Товаров');
 		if ($xml->Каталог->Товары->Товар) {
 			foreach ($xml->Каталог->Товары->Товар as $product) {
 
@@ -556,16 +577,16 @@ class ModelToolExchange1c extends Model {
 					$data['image'] = $apply_watermark ? $this->applyWatermark((string)$product->Картинка[0]) : (string)$product->Картинка[0];
 					unset($product->Картинка[0]);
 					foreach ($product->Картинка as $image) {
-					  $data['product_image'][] =array(
+				    	$data['product_image'][] =array(
 							'image' => $apply_watermark ? $this->applyWatermark((string)$image) : (string)$image,
 							'sort_order' => 0
 						);
 					}
 				// Кириллов В.Е. 2015-01-03 - в товары без картинок подставляется пустая картинка {
-                } else {
-				    $data['image'] = 'no_image.jpg';
+				} else {
+					$data['image'] = 'no_image.jpg';
+				// }
 				}
-                // }
 
 				if($product->ХарактеристикиТовара){
 
@@ -700,6 +721,8 @@ class ModelToolExchange1c extends Model {
 
 				// Реквизиты продукта
 				if($product->ЗначенияРеквизитов) {
+					if ($enable_log)
+						$this->log->write("ParseImport: Загрузка реквизитов продукта...");
 					foreach ($product->ЗначенияРеквизитов->ЗначениеРеквизита as $requisite){
 						switch ($requisite->Наименование){
 							case 'Вес':
@@ -720,28 +743,31 @@ class ModelToolExchange1c extends Model {
 				}
 
 				// Фильтры
-                if (isset($product_filter)) {
-                    $data['product_filter'] = $product_filter;
-                    $this->log->write(print_r($product_filter, true));
-                }
+//				if (isset($product_filter)) {
+//					$data['product_filter'] = $product_filter;
+//					$this->log->write(print_r($product_filter, true));
+//				}
 				    
+				if ($enable_log)
+						$this->log->write("ParseImport: Запись товара в базу данных...");
                 $this->setProduct($data, $language_id);
 				
                 // Фильтры
-                //if (isset($product_filter) && isset($uuid[0])) {
-                if (isset($product_filter)) {
-                    $product_id = $this->getProductIdBy1CProductId($uuid[0]);
-                    //$this->updateProductFilter($product_id, $product_filter);
-                    //$this->insertCategoryFilters($product_id, $product_filter);
-                }
+//				if (isset($product_filter) && isset($uuid[0])) {
+//				if (isset($product_filter)) {
+//					$product_id = $this->getProductIdBy1CProductId($uuid[0]);
+//					$this->updateProductFilter($product_id, $product_filter);
+//					$this->insertCategoryFilters($product_id, $product_filter);
+//				}
                 
                 unset($data);
 			}
 		}
 
 		unset($xml);
-		if ($enable_log)
-			$this->log->write("Окончен разбор файла: " . $filename );
+		if ($enable_log) {
+			$this->log->write("ParseImport: Окончен разбор файла: " . $filename );
+		}
 	}
 
 
@@ -789,25 +815,41 @@ class ModelToolExchange1c extends Model {
 	private function insertWarehouse($xml) {
 		foreach ($xml as $warehouse){
 			if (isset($warehouse->Ид) && isset($warehouse->Наименование) ){
-				$id = (string)$warehouse->Ид;
+				$id_1c = (string)$warehouse->Ид;
 				$name = (string)$warehouse->Наименование;
 				
-				$query = $this->db->query('SELECT * FROM `' . DB_PREFIX . 'warehouse` WHERE `1c_warehouse_id` = "' . $this->db->escape($id) . '"');
+				$query = $this->db->query('SELECT * FROM `' . DB_PREFIX . 'warehouse` WHERE `1c_warehouse_id` = "' . $this->db->escape($id_1c) . '"');
 				if ($query->num_rows) {
 					$this->log->write('Найден склад: '.(string)$query->row['name']);
+					$id = (int)$query->row['warehouse_id'];
 				} else {
-					//$this->db->query('INSERT INTO `' . DB_PREFIX . 'warehouse` SET name = ' . $name . ', `1c_warehouse_id` = "' . $this->db->escape($id) . '"');
-					$this->log->write('Добавлен склад: ' . $name);
+					$this->db->query('INSERT INTO `' . DB_PREFIX . 'warehouse` SET name = "' . $name . '", `1c_warehouse_id` = "' . $this->db->escape($id_1c) . '"');
+					$this->log->write('Добавлен склад: ' . $name. ', UUID: ' . $id_1c);
+					$id = $this->db->getLastId();
 				}
 			}
-			$this->WAREHOUSES[$id] = array(
-				'id' => 0,
+			$this->WAREHOUSES[$id_1c] = array(
+				'id' => $id,
 				'name' => $name
 				);             	
-			$this->log->write('Склад Ид в 1С: '.$id.', наименование: '.$name);
+			$this->log->write('Склад Ид в 1С: '.$id_1c.', наименование: '.$name);
 		}
 	}
 	
+	/**
+	 * Функция добавляет остаток на склад
+	 *
+	 * @param	int
+	 * @param	int
+	 */
+	private function insertQuantity($warehouse_id, $product_id, $quantity) {
+		$sql = 'SELECT * FROM `' . DB_PREFIX . 'product_quantity` WHERE `product_id` = ' . $product_id;
+		$this->log->write($sql);
+		$sql = 'INSERT INTO  `' . DB_PREFIX . 'product_quantity` SET `warehouse_id` = ' . $warehouse_id . ', `product_id` = ' . $product_id . ', `quantity` = ' . $quantity;
+		$this->log->write($sql);
+	}
+
+
 	/**
 	 * Функция добавляет корневую категорию и всех детей
 	 *
@@ -816,6 +858,8 @@ class ModelToolExchange1c extends Model {
 	 */
 	private function insertCategory($xml, $parent = 0, $language_id) {
 
+		$this->log->write('Вызов функции insertCategory');
+		
 		$this->load->model('catalog/category');
 
 		foreach ($xml as $category){
@@ -868,6 +912,7 @@ class ModelToolExchange1c extends Model {
 		$this->load->model('catalog/attribute_group');
 		$lang_id = (int)$this->config->get('config_language_id');
 
+		// Получаем группу атрибута с id=1 !!!
 		$attribute_group = $this->model_catalog_attribute_group->getAttributeGroup(1);
 
 		if (!$attribute_group) {
@@ -881,7 +926,7 @@ class ModelToolExchange1c extends Model {
 				'attribute_group_description'	=> $attribute_group_description
 			);
 
-			$this->model_catalog_attribute_group->addAttributeGroup($data);
+			$attribute_group_id = $this->model_catalog_attribute_group->addAttributeGroup($data);
 		}
 
 		foreach ($xml as $attribute) {
@@ -899,6 +944,7 @@ class ModelToolExchange1c extends Model {
 				}
 			}
 
+			// В значениях атрибутов указывается упривязка к группе с id=1 !!! (а если )
 			$data = array (
 				'attribute_group_id'    => 1,
 				'sort_order'            => 0,
@@ -906,23 +952,18 @@ class ModelToolExchange1c extends Model {
 
 			$data['attribute_description'][$lang_id]['name'] = (string)$name;
 
-            // Не добавляем в БД общие свойства
-            if (($name <> "Гарантия") && ($name <> "MPN")) {
-
             // Если атрибут уже был добавлен, то возвращаем старый id, если атрибута нет, то создаем его и возвращаем его id
 			$current_attribute = $this->db->query('SELECT attribute_id FROM ' . DB_PREFIX . 'attribute_to_1c WHERE 1c_attribute_id = "' . $id . '"');
 			if (!$current_attribute->num_rows) {
 				$attribute_id = $this->model_catalog_attribute->addAttribute($data);
 				$this->db->query('INSERT INTO `' .  DB_PREFIX . 'attribute_to_1c` SET attribute_id = ' . (int)$attribute_id . ', `1c_attribute_id` = "' . $id . '"');
+				$this->log->write('Добавлен атрибут: '.$name);
 			}
 			else {
 				$data = $current_attribute->row;
 				$attribute_id = $data['attribute_id'];
+				$this->log->write('Найден атрибут, ID: '.$attribute_id);
 			}
-
-            } else {
-                $attribute_id = 0;
-            } 
 
 			$this->PROPERTIES[$id] = array(
 				'id'     => $attribute_id,
@@ -978,6 +1019,7 @@ class ModelToolExchange1c extends Model {
 			$data = array_merge($data, array('product_store' => $this->model_catalog_product->getProductStores($product_id)));
 			$data = array_merge($data, array('product_related' => $this->model_catalog_product->getProductRelated($product_id)));
 			$data = array_merge($data, array('product_attribute' => $this->model_catalog_product->getProductAttributes($product_id)));
+			$data = array_merge($data, array('product_quantity' => $this->model_catalog_product->getProductQuantity($product_id)));
 
             $result['product_filter']   = (isset($product['product_filter'])) ? $product['product_filter'] : (isset($data['product_filter']) ? $data['product_filter'] : array());
             
@@ -1047,7 +1089,8 @@ class ModelToolExchange1c extends Model {
 			,'product_special'  => (isset($product['product_special'])) ? $product['product_special'] : (isset($data['product_special']) ? $data['product_special']: array())
 			,'product_download' => (isset($product['product_download'])) ? $product['product_download'] : (isset($data['product_download']) ? $data['product_download']: array())
 			,'product_related'  => (isset($product['product_related'])) ? $product['product_related'] : (isset($data['product_related']) ? $data['product_related']: array())
-			,'product_attribute'    => (isset($product['product_attribute'])) ? $product['product_attribute'] : (isset($data['product_attribute']) ? $data['product_attribute']: array())
+			,'product_attribute'=> (isset($product['product_attribute'])) ? $product['product_attribute'] : (isset($data['product_attribute']) ? $data['product_attribute']: array())
+			,'product_quantity' => (isset($product['product_quantity'])) ? $product['product_quantity'] : (isset($data['product_quantity']) ? $data['product_quantity']: array())
 		);
 
 		if (VERSION == '1.5.3.1') {
@@ -1107,8 +1150,6 @@ class ModelToolExchange1c extends Model {
 			$result['product_category'] = $data['product_category'];
 		}
 		
-        //var_dump($result['product_category']);
-        
 		if (isset($product['related_options_use'])) {
 			$result['related_options_use'] = $product['related_options_use'];
 		}
@@ -1131,11 +1172,14 @@ class ModelToolExchange1c extends Model {
 	 */
 	private function setProduct($product, $language_id) {
 
+		$enable_log = $this->config->get('exchange1c_full_log');
+
 		if (!$product) return;
 
 		// Проверяем, связан ли 1c_id с product_id
 		$product_id = $this->getProductIdBy1CProductId($product['1c_id']);
 		$data = $this->initProduct($product, array(), $language_id);
+		
 
 		if ($product_id) {
 			$this->updateProduct($product, $product_id, $language_id);
@@ -1503,7 +1547,7 @@ class ModelToolExchange1c extends Model {
 			if ($enable_log)
 				$this->log->write("Очистка таблиц товаров: ");
 			$this->db->query('TRUNCATE TABLE `' . DB_PREFIX . 'product`');
-			$this->db->query('TRUNCATE TABLE `' . DB_PREFIX . 'product_warehouse`');
+			$this->db->query('TRUNCATE TABLE `' . DB_PREFIX . 'product_quantity`');
 			$this->db->query('TRUNCATE TABLE `' . DB_PREFIX . 'warehouse`');
 			$this->db->query('TRUNCATE TABLE `' . DB_PREFIX . 'unit`');
 			if ($enable_log)
@@ -1735,18 +1779,17 @@ class ModelToolExchange1c extends Model {
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 		}
-    	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'product_warehouse"');
+    	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'product_quantity"');
 		if(!$query->num_rows) {
 			$this->db->query(
 					'CREATE TABLE
-						`' . DB_PREFIX . 'product_warehouse` (
-							`product_id` int(11) NOT NULL,
-							`warehouse_id` int(11) NOT NULL,
-							`unit_id` int(11) NOT NULL,
-                            `unit_ratio` decimal(20,6) NOT NULL DEFAULT 1,
-                            `quantuty` int(10) DEFAULT 0,
-                            PRIMARY KEY (`product_id`)
-						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
+						`' . DB_PREFIX . 'product_quantity` (
+						`product_id` int(11) NOT NULL,
+						`warehouse_id` int(11) NOT NULL,
+						`quantuty` int(10) DEFAULT 0,
+						KEY (`product_id`),
+						KEY (`warehouse_id`)                            
+					) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 		}
     	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'warehouse"');
@@ -1761,6 +1804,12 @@ class ModelToolExchange1c extends Model {
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 		}
+		// Добавляем поле Гарантия
+		$query = $this->db->query('SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = "' . DB_PREFIX . 'product" AND COLUMN_NAME = "guarantee"');
+		if(!$query->num_rows) {
+			$query = $this->db->query('ALTER TABLE `' . DB_PREFIX . 'product` ADD `guarantee` varchar(32) NULL');
+			$this->log->write('Добавлено поле Гарантия в таблицу товаров');			
+		} 
         //-
 	}
 
