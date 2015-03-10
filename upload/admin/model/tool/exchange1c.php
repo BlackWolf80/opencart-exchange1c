@@ -552,7 +552,7 @@ class ModelToolExchange1c extends Model {
 			$this->log->write('ParseImport: Загрузка Свойств');
 		if ($xml->Классификатор->Свойства) $this->insertAttribute($xml->Классификатор->Свойства->Свойство);
 		$this->log->write('В базу загружены свойства:');
-		$this->log->write($this->PROPERTIES);
+		//$this->log->write($this->PROPERTIES);
 
 		$this->load->model('catalog/manufacturer');
 
