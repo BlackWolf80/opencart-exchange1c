@@ -146,6 +146,7 @@ $registry->set('user', new User($registry));
 // Front Controller
 $controller = new Front($registry);
 
+$log->write('mode: ' . $request->get['mode'] . ', type: ' . $request->get['type']);
 
 // Router
 if (isset($request->get['mode']) && $request->get['type'] == 'catalog') {
@@ -156,19 +157,23 @@ if (isset($request->get['mode']) && $request->get['type'] == 'catalog') {
 		break;
 		
 		case 'init':
+			$log->write('Вызов функции modeCatalogInit');
 			$action = new Action('module/exchange1c/modeCatalogInit');
 		break;
 
 		case 'file':
+			$log->write('Вызов функции modeFile');
 			$action = new Action('module/exchange1c/modeFile');
 		break;
 
 		case 'import':
+			$log->write('Вызов функции modeImport');
 			$action = new Action('module/exchange1c/modeImport');
 		break;
 
 		default:
 			echo "success\n";
+			$log->write('type=catalog -> success');
 	}
 	
 } else if (isset($request->get['mode']) && $request->get['type'] == 'sale') {
@@ -192,6 +197,8 @@ if (isset($request->get['mode']) && $request->get['type'] == 'catalog') {
 
 		default:
 			echo "success\n";
+			$log->write('type=sale -> success');
+
 	}
 
 } else {
