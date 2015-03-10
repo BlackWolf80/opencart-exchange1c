@@ -4,6 +4,7 @@ class ControllerModuleExchange1c extends Controller {
 
 	public function index() {
 
+		$this->log->write("ControllerModuleExchange1c. function index()");
 		$this->load->language('module/exchange1c');
 		$this->load->model('tool/image');
 
@@ -436,30 +437,37 @@ class ControllerModuleExchange1c extends Controller {
 	
 	public function modeCatalogInit($echo = true) {
 		
+		if (!isset($this->request->cookie['key'])) {
+			echo "no cookie key";
+			$this->log->write("Mode:init. No cookie key");
+			return;
+		}
+
+		if ($this->request->cookie['key'] != md5($this->config->get('exchange1c_password'))) {
+			echo "failure\n";
+			echo "Session error";
+			$this->log->write("Mode:init. Session error");
+			return;
+		}
+
 		$this->load->model('tool/exchange1c');
 		
 		// чистим кеш, убиваем старые данные
+		$this->log->write("Mode:init/Catalog. Чистим кэш");
 		$this->cleanCacheDir();
 		
 		// Проверяем естль ли БД для хранения промежуточных данных.
+		$this->log->write("Mode:init/Catalog. Проверяем естль ли БД для хранения промежуточных данных");
 		$this->model_tool_exchange1c->checkDbSheme();
-		
-//		// Очищаем таблицы
-//		$this->model_tool_exchange1c->flushDb(array(
-//			'product' 		=> $this->config->get('exchange1c_flush_product'),
-//			'category'		=> $this->config->get('exchange1c_flush_category'),
-//			'manufacturer'	=> $this->config->get('exchange1c_flush_manufacturer'),
-//			'attribute'		=> $this->config->get('exchange1c_flush_attribute'),
-//			'full_log'		=> $this->config->get('exchange1c_full_log'),
-//			'apply_watermark'	=> $this->config->get('exchange1c_apply_watermark'),
-//			'quantity'		=> $this->config->get('exchange1c_flush_quantity')
-//		));
 
 		$limit = 100000 * 1024;
-	
+
 		if ($echo) {
+			$this->log->write("Mode:init/Catalog. Отправляем ответ в 1С об успешном результате");
 			echo "zip=no\n";
 			echo "file_limit=".$limit."\n";
+		} else {
+			$this->log->write("Mode:init/Catalog. Отчет не отпрпавляем!");
 		}
 	
 	}
@@ -487,11 +495,13 @@ class ControllerModuleExchange1c extends Controller {
 
 		// Проверяем на наличие имени файла
 		if (isset($this->request->get['filename'])) {
+			$this->log->write('Загрузка файла: ' . $this->request->get['filename'] . '...');
 			$uplod_file = $cache . $this->request->get['filename'];
 		}
 		else {
 			echo "failure\n";
 			echo "ERROR 10: No file name variable";
+			$this->log->write('Ошибка загрузки файла!');
 			return;
 		}
 
@@ -503,6 +513,7 @@ class ControllerModuleExchange1c extends Controller {
 		}
 
 		// Получаем данные
+		$this->log->write('Получим данные...');
 		$data = file_get_contents("php://input");
 
 		if ($data !== false) {
@@ -534,6 +545,8 @@ class ControllerModuleExchange1c extends Controller {
 	}
 
 	public function modeImport($manual = false) {
+		
+		$this->log->write('Вызов функции modeImport');
 
 		$cache = DIR_CACHE . 'exchange1c/';
 
