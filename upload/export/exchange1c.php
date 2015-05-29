@@ -157,23 +157,19 @@ if (isset($request->get['mode']) && $request->get['type'] == 'catalog') {
 		break;
 		
 		case 'init':
-			$log->write('Вызов функции modeCatalogInit');
 			$action = new Action('module/exchange1c/modeCatalogInit');
 		break;
 
 		case 'file':
-			$log->write('Вызов функции modeFile');
 			$action = new Action('module/exchange1c/modeFile');
 		break;
 
 		case 'import':
-			$log->write('Вызов функции modeImport');
 			$action = new Action('module/exchange1c/modeImport');
 		break;
 
 		default:
 			echo "success\n";
-			$log->write('type=catalog -> success');
 	}
 	
 } else if (isset($request->get['mode']) && $request->get['type'] == 'sale') {
@@ -189,6 +185,14 @@ if (isset($request->get['mode']) && $request->get['type'] == 'catalog') {
 
 		case 'query':
 			$action = new Action('module/exchange1c/modeQueryOrders');
+		break;
+
+		case 'file':
+			$action = new Action('module/exchange1c/modeFile');
+		break;
+
+		case 'import':
+			$action = new Action('module/exchange1c/modeImport');
 		break;
 
 		case 'success':
