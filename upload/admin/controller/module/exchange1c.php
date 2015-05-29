@@ -4,7 +4,6 @@ class ControllerModuleExchange1c extends Controller {
 
 	public function index() {
 
-		$this->log->write("ControllerModuleExchange1c. function index()");
 		$this->load->language('module/exchange1c');
 		$this->load->model('tool/image');
 
@@ -408,9 +407,9 @@ class ControllerModuleExchange1c extends Controller {
 			}
 			else {
 
-				// Читаем первые 256 байт и определяем файл по сигнатуре, ибо мало ли, какое у него имя
+				// Читаем первые 1024 байт и определяем файл по сигнатуре, ибо мало ли, какое у него имя
 				$handle = fopen($this->request->files['file']['tmp_name'], 'r');
-				$buffer = fread($handle, 256);
+				$buffer = fread($handle, 512);
 				fclose($handle);
 
 				if (strpos($buffer, 'Классификатор')) {
@@ -439,35 +438,28 @@ class ControllerModuleExchange1c extends Controller {
 		
 		if (!isset($this->request->cookie['key'])) {
 			echo "no cookie key";
-			$this->log->write("Mode:init. No cookie key");
 			return;
 		}
 
 		if ($this->request->cookie['key'] != md5($this->config->get('exchange1c_password'))) {
 			echo "failure\n";
 			echo "Session error";
-			$this->log->write("Mode:init. Session error");
 			return;
 		}
 
 		$this->load->model('tool/exchange1c');
 		
 		// чистим кеш, убиваем старые данные
-		$this->log->write("Mode:init/Catalog. Чистим кэш");
 		$this->cleanCacheDir();
 		
 		// Проверяем естль ли БД для хранения промежуточных данных.
-		$this->log->write("Mode:init/Catalog. Проверяем естль ли БД для хранения промежуточных данных");
 		$this->model_tool_exchange1c->checkDbSheme();
 
 		$limit = 100000 * 1024;
 
 		if ($echo) {
-			$this->log->write("Mode:init/Catalog. Отправляем ответ в 1С об успешном результате");
 			echo "zip=no\n";
 			echo "file_limit=".$limit."\n";
-		} else {
-			$this->log->write("Mode:init/Catalog. Отчет не отпрпавляем!");
 		}
 	
 	}
@@ -501,7 +493,6 @@ class ControllerModuleExchange1c extends Controller {
 		else {
 			echo "failure\n";
 			echo "ERROR 10: No file name variable";
-			$this->log->write('Ошибка загрузки файла!');
 			return;
 		}
 
@@ -513,7 +504,6 @@ class ControllerModuleExchange1c extends Controller {
 		}
 
 		// Получаем данные
-		$this->log->write('Получим данные...');
 		$data = file_get_contents("php://input");
 
 		if ($data !== false) {
@@ -546,8 +536,6 @@ class ControllerModuleExchange1c extends Controller {
 
 	public function modeImport($manual = false) {
 		
-		$this->log->write('Вызов функции modeImport');
-
 		$cache = DIR_CACHE . 'exchange1c/';
 
 		if ($manual) {
@@ -563,13 +551,13 @@ class ControllerModuleExchange1c extends Controller {
 			echo "ERROR 10: No file name variable";
 			return 0;
 		}
-
+		
 		$this->load->model('tool/exchange1c');
 
 		// Определяем текущую локаль
 		$language_id = $this->model_tool_exchange1c->getLanguageId($this->config->get('config_language'));
 
-        $this->log->write('Имя файла: ' . $filename);
+		$this->log->write('Имя файла: ' . $filename);
         
 		if (strpos($filename, 'import') !== false) {
 			
@@ -585,8 +573,8 @@ class ControllerModuleExchange1c extends Controller {
 				$this->model_module_deadcow_seo->generateProducts($this->config->get('deadcow_seo_products_template'), '.html', 'Russian', true, true);
 				$this->model_module_deadcow_seo->generateManufacturers($this->config->get('deadcow_seo_manufacturers_template'), '', 'Russian', true, true);
 				
-                $this->model_module_deadcow_seo->generateProductsMetaKeywords($this->config->get('deadcow_seo_meta_template'), $this->config->get('deadcow_seo_yahoo_id'), 'Russian', false);
-                $this->model_module_deadcow_seo->generateTags($this->config->get('deadcow_seo_tags_template'), 'Russian', false);
+        $this->model_module_deadcow_seo->generateProductsMetaKeywords($this->config->get('deadcow_seo_meta_template'), $this->config->get('deadcow_seo_yahoo_id'), 'Russian', false);
+        $this->model_module_deadcow_seo->generateTags($this->config->get('deadcow_seo_tags_template'), 'Russian', false);
 				$this->model_module_deadcow_seo->generateCategoriesMetaKeywords($this->config->get('deadcow_seo_categories_template'), 'Russian');
 			}
 
@@ -598,6 +586,14 @@ class ControllerModuleExchange1c extends Controller {
 		else if (strpos($filename, 'offers') !== false) {
 			$exchange1c_price_type = $this->config->get('exchange1c_price_type');
 			$this->model_tool_exchange1c->parseOffers($filename, $exchange1c_price_type, $language_id);
+			
+			if (!$manual) {
+				echo "success\n";
+			}
+		}
+		else if (strpos($filename, 'orders') !== false) {
+			$exchange1c_price_type = $this->config->get('exchange1c_price_type');
+			$this->model_tool_exchange1c->parseOrders($filename, $exchange1c_price_type, $language_id);
 			
 			if (!$manual) {
 				echo "success\n";
