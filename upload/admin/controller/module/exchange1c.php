@@ -19,7 +19,7 @@ class ControllerModuleExchange1c extends Controller {
 			$this->redirect($this->url->link('extension/module', 'token=' . $this->session->data['token'], 'SSL'));
 		}
 
-		$this->data['version'] = 'Version 1.6.0';
+		$this->data['version'] = 'Version 1.6.1.tesla-chita';
 
 		$this->data['heading_title'] = $this->language->get('heading_title');
 		$this->data['entry_username'] = $this->language->get('entry_username');
@@ -409,55 +409,70 @@ class ControllerModuleExchange1c extends Controller {
 
 				// Читаем первые 1024 байт и определяем файл по сигнатуре, ибо мало ли, какое у него имя
 				$handle = fopen($this->request->files['file']['tmp_name'], 'r');
-				$buffer = fread($handle, 512);
+				$buffer = fread($handle, 1024);
 				fclose($handle);
 
-				if (strpos($buffer, 'Классификатор')) {
+				if (strpos($buffer, 'ПакетПредложений')) {
+					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'offers.xml');
+					$this->modeImport('offers.xml');
+					//$this->log->write('End of modeImport(offers.xml)');
+				}
+				else if (strpos($buffer, 'Документ')) {
+					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'orders.xml');
+					$this->modeImport('orders.xml');
+					//$this->log->write('End of modeImport(orders.xml)');
+				}
+				else if (strpos($buffer, 'Классификатор')) {
 					$this->modeCatalogInit(false);
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'import.xml');
 					$this->modeImport('import.xml');
+					//$this->log->write('End of modeImport(import.xml)');
 				
 				}
-				else if (strpos($buffer, 'ПакетПредложений')) {
-					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'offers.xml');
-					$this->modeImport('offers.xml');
-				}
 				else {
+					//$this->log->write('Ошибка при ручной загрузке файла');
 					$json['error'] = $this->language->get('text_upload_error');
 					exit;
 				}
 			}
-
+			//$this->log->write('modeImport comleted');
 			$json['success'] = $this->language->get('text_upload_success');
 		}
-
+		//$this->log->write('output result');
 		$this->response->setOutput(json_encode($json));
 	}
 	
 	public function modeCatalogInit($echo = true) {
 		
-		if (!isset($this->request->cookie['key'])) {
-			echo "no cookie key";
-			return;
+		if ($echo){
+			if (!isset($this->request->cookie['key'])) {
+				$this->log->write('modeCatalogInit: no cookie key');
+				echo "no cookie key";
+				return;
+			}
+	
+			if ($this->request->cookie['key'] != md5($this->config->get('exchange1c_password'))) {
+				$this->log->write('modeCatalogInit: password failure');
+				echo "failure\n";
+				echo "Session error";
+				return;
+			}
 		}
-
-		if ($this->request->cookie['key'] != md5($this->config->get('exchange1c_password'))) {
-			echo "failure\n";
-			echo "Session error";
-			return;
-		}
-
+		
 		$this->load->model('tool/exchange1c');
 		
 		// чистим кеш, убиваем старые данные
+		$this->log->write('modeCatalogInit: Чистим кэш');
 		$this->cleanCacheDir();
 		
 		// Проверяем естль ли БД для хранения промежуточных данных.
+		$this->log->write('modeCatalogInit: Проверка базы данных - checkDbSheme()');
 		$this->model_tool_exchange1c->checkDbSheme();
 
 		$limit = 100000 * 1024;
 
 		if ($echo) {
+			$this->log->write('modeCatalogInit: Вывод echo включен');
 			echo "zip=no\n";
 			echo "file_limit=".$limit."\n";
 		}
