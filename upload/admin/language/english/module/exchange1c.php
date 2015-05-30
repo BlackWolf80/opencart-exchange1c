@@ -54,6 +54,8 @@ $_['entry_relatedoptions_help']	= 'Related options settings should be turned on:
 $_['entry_dont_use_artsync'] = 'Do not search products by sku:';
 
 $_['entry_order_status']	= 'Uploaded orders status:';
+$_['entry_order_status_cancel']	= 'Status of canceled orders:';
+$_['entry_order_status_completed']	= 'Status of completed orders:';
 $_['entry_order_notify']	= 'Notify users of status change:';
 $_['entry_order_currency']	= 'Orders currency:';
 
