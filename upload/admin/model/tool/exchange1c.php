@@ -38,6 +38,9 @@ class ModelToolExchange1c extends Model {
 				$date = date('Y-m-d', strtotime($order['date_added']));
 				$time = date('H:i:s', strtotime($order['date_added']));
 
+				$customer_group = $this->model_sale_customer_group->getCustomerGroup($order['customer_group_id']);
+				$this->log->write('Группа пользователей: '.$customer_group['name']);
+
 				$document['Документ' . $document_counter] = array(
 					 'Ид'          => $order['order_id']
 					,'Номер'       => $order['order_id']
@@ -49,33 +52,130 @@ class ModelToolExchange1c extends Model {
 					,'Роль'        => 'Продавец'
 					,'Сумма'       => $order['total']
 					,'Комментарий' => $order['comment']
+					//,'Склады' => array(
+					//	'Склад' => array(
+					//		'Ид' => '9a539d97-7e22-11e4-ada2-00265a7bdd8c',
+					//		'Адрес' => array(
+					//			'АдресноеПоле' => array(
+					//				'Тип' =>  'Факт. адрес',
+					//				'Значение' => 'ул. Фрунзе, д.3'
+					//			)
+					//		),
+					//		'Наименование' => 'Фрунзе 3'
+					//		,'Контакты'     => array(
+					//			'Контакт' => array(
+					//				'Тип' => 'Тип',
+					//				'Значение' => 'Менеджер'
+					//			)
+					//		)
+					//	)
+					//)
+					,'Соглашение' => $customer_group['name']
 				);
 
+				// Разбирает ФИО
 				$user = explode(",", $order['payment_firstname']);
 				$firstname = count($user)>0 ? trim($user[0]," ") : '';
 				$patronymic = count($user)>1 ? trim($user[1]," ") : '';
-				$document['Документ' . $document_counter]['Контрагенты']['Контрагент'] = array(
-					 'Ид'                 => $order['customer_id'] . '#' . $order['email']
-					,'Наименование'		    => $order['payment_lastname'] . ' ' . $firstname . ' ' . $patronymic
-					//,'ИНН'		        => '753400141242'
-					,'Роль'               => 'Покупатель'
-					,'ПолноеНаименование' => $order['payment_lastname'] . ' ' . $firstname . ' ' . $patronymic
-					,'Фамилия'            => $order['payment_lastname']
-					,'Имя'			      => $firstname
-					,'Отчество'		      => $patronymic
-					,'АдресРегистрации' => array(
-						'Представление'	=> $order['shipping_address_1'].', '.$order['shipping_city'].', '.$order['shipping_postcode'].', '.$order['shipping_country']
-					)
-					,'Контакты' => array(
-						'Контакт1' => array(
-							'Тип' => 'ТелефонРабочий'
-							,'Значение'	=> $order['telephone']
+
+				//if ($order['payment_company']) {
+
+					$document['Документ' . $document_counter]['Контрагенты']['Контрагент'] = array(
+						 'Ид'                 => $order['customer_id'] . '#' . $order['email']
+						,'Наименование'		    => $order['payment_lastname'] . ' ' . $firstname . ' ' . $patronymic
+						//+++ Для организаций
+						//,'ИНН'		        => $order['payment_company_id']
+						//,'ОфициальноеНаименование' => $order['payment_company']		// Если заполнено, значит ЮрЛицо
+						//,'ПолноеНаименование'	=> $order['payment_company']			// Полное наименование организации 
+						//---
+						,'Роль'               => 'Покупатель'
+						,'ПолноеНаименование' => $order['payment_lastname'] . ' ' . $firstname . ' ' . $patronymic
+						,'Фамилия'            => $order['payment_lastname']
+						,'Имя'			      => $firstname
+						,'Отчество'		      => $patronymic
+						,'АдресРегистрации' => array(
+							'Представление'	=> $order['shipping_address_1'].', '.$order['shipping_city'].', '.$order['shipping_postcode'].', '.$order['shipping_country']
 						)
-						,'Контакт2'	=> array(
-							 'Тип' => 'Почта'
-							,'Значение'	=> $order['email']
+						,'Контакты' => array(
+							'Контакт1' => array(
+								'Тип' => 'ТелефонРабочий'
+								,'Значение'	=> $order['telephone']
+							)
+							,'Контакт2'	=> array(
+								 'Тип' => 'Почта'
+								,'Значение'	=> $order['email']
+							)
 						)
+					);
+					if ($order['payment_tax_id']) {
+						$document['Документ' . $document_counter]['Контрагенты']['Контрагент']['КПП'] = $order['payment_tax_id'];						
+					}
+				 
+//				} else {
+//
+//					$document['Документ' . $document_counter]['Контрагенты']['Контрагент'] = array(
+//						 'Ид'                 => $order['customer_id'] . '#' . $order['email']
+//						,'Наименование'		    => $order['payment_lastname'] . ' ' . $firstname . ' ' . $patronymic
+//						,'Роль'               => 'Покупатель'
+//						,'ПолноеНаименование' => $order['payment_lastname'] . ' ' . $firstname . ' ' . $patronymic
+//						,'Фамилия'            => $order['payment_lastname']
+//						,'Имя'			      => $firstname
+//						,'Отчество'		      => $patronymic
+//						,'АдресРегистрации' => array(
+//							'Представление'	=> $order['shipping_country'].', '.$order['shipping_postcode'].', '.$order['shipping_city'].', '.$order['shipping_address_1']
+//						)
+//						,'Контакты' => array(
+//							'Контакт1' => array(
+//								'Тип' => 'ТелефонРабочий'
+//								,'Значение'	=> $order['telephone']
+//							)
+//							,'Контакт2'	=> array(
+//								 'Тип' => 'Почта'
+//								,'Значение'	=> $order['email']
+//							)
+//						)
+//					);
+//					
+//									
+//				}
+//
+
+//				$this->load->model('localisation/order_status');
+//				$order_status_description = $this->model_localisation_order_status->getOrderStatusDescriptions($order['order_status_id']);
+//				$this->log->write($order_status_description);
+//				$this->log->write('Ид статуса заказа: '.$order_status_description[$language_id]['name']);
+//				
+				// Реквизиты документа
+				$document['Документ' . $document_counter]['ЗначенияРеквизитов'] = array(
+					'ЗначениеРеквизита2' => array(
+						'Наименование' => 'Дата отгрузки',
+						'Значение' => $date
 					)
+//					,'ЗначениеРеквизита' => array(
+//						'Наименование' => 'Организация',
+//						'Значение' => 'Тесла-Чита'
+//					)
+//					,'ЗначениеРеквизита1' => array(
+//						'Наименование' => 'Склад',
+//						'Значение' => 'Фрунзе 3'
+//					)
+//					,'ЗначениеРеквизита3' => array(
+//						'Наименование' => 'ВидЦен',
+//						'Значение' => 'Розница'
+//					)
+//					,'ЗначениеРеквизита4' => array(
+//						'Наименование' => 'Подразделение',
+//						'Значение' => 'Интернет-магазин'
+//					)
+//					,'ЗначениеРеквизита6' => array(
+//						'Наименование' => 'Сумма включает НДС',
+//						'Значение' => true
+//					)
+//					,'ЗначениеРеквизита7' => array(
+//						'Наименование' => 'Статус заказа',
+//						'Значение' => $order_status_description[$language_id]['name']
+//					)
+//					
 				);
 
 				// Товары
@@ -91,7 +191,13 @@ class ModelToolExchange1c extends Model {
 						,'ЦенаЗаЕдиницу'  => $product['price']
 						,'Количество'     => $product['quantity']
 						,'Сумма'          => $product['total']
+						,'Резерв' 		  	=> $product['quantity']
 						,'БазоваяЕдиница' => array('Код' => '796','НаименованиеПолное' => 'Штука')
+						,'Скидки'         => array('Скидка' => array(
+							'УчтеноВСумме' => 'false'
+							,'Сумма' => 0
+							)
+						)
 						,'ЗначенияРеквизитов' => array(
 							'ЗначениеРеквизита' => array(
 								'Наименование' => 'ТипНоменклатуры'
@@ -125,32 +231,32 @@ class ModelToolExchange1c extends Model {
 					$product_counter++;
 				}
 
-                //Доставка
-                $totals = $this->model_sale_order->getOrderTotals($orders_data['order_id']);
-
-                foreach ($totals as $total) {
-                     if ($total['code']=='shipping') {
-
-                        $document['Документ' . $document_counter]['Услуги']['Услуга' . $product_counter] = array(
-                            'Ид'         => ''
-                            ,'Наименование' => 'Доставка'
-                            ,'ЦенаЗаЕдиницу'=> $total['value']
-                            ,'Количество' => 1
-                            ,'Сумма'       => $total['value']
-                            ,'БазоваяЕдиница' => array(
-                                'Код' => '796',
-                                'НаименованиеПолное' => 'Штука'
-                            )
-							,'ЗначенияРеквизитов' => array(
-								'ЗначениеРеквизита' => array(
-									'Наименование' => 'ТипНоменклатуры'
-									,'Значение' => 'Услуга'
-								)
-							)
-                        );
-                    }
-
-                }
+//				//Доставка
+//        $totals = $this->model_sale_order->getOrderTotals($orders_data['order_id']);
+//
+//				foreach ($totals as $total) {
+//					if ($total['code']=='shipping') {
+//
+//						$document['Документ' . $document_counter]['Услуги']['Услуга' . $product_counter] = array(
+//							'Ид'         => ''
+//							,'Наименование' => 'Доставка'
+//							,'ЦенаЗаЕдиницу'=> $total['value']
+//							,'Количество' => 1
+//							,'Сумма'       => $total['value']
+//							,'БазоваяЕдиница' => array(
+//								'Код' => '796',
+//								'НаименованиеПолное' => 'Штука'
+//							)
+//							,'ЗначенияРеквизитов' => array(
+//								'ЗначениеРеквизита' => array(
+//									'Наименование' => 'ТипНоменклатуры'
+//									,'Значение' => 'Услуга'
+//								)
+//							)
+//						);
+//					}
+//				}
+//				
 				$document_counter++;
 			}
 		}
@@ -1913,7 +2019,6 @@ class ModelToolExchange1c extends Model {
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 		}
-        // +Кириллов
     	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'unit"');
 		if(!$query->num_rows) {
 			$this->db->query(
@@ -1957,7 +2062,6 @@ class ModelToolExchange1c extends Model {
 			$query = $this->db->query('ALTER TABLE `' . DB_PREFIX . 'product` ADD `guarantee` varchar(32) NULL');
 			$this->log->write('Добавлено поле Гарантия в таблицу товаров');			
 		} 
-        //-
 	}
 
 }
