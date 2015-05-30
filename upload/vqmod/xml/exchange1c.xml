@@ -14,7 +14,7 @@
 	<file name="admin/model/catalog/category.php">
 		<operation>
 			<search position="before" offset="2"><![CDATA[public function editCategory]]></search>
-			<add><![CDATA[return $category_id;]]></add>
+			<add><![CDATA[		return $category_id;]]></add>
 		</operation>
 	</file>
 	
@@ -29,6 +29,11 @@
 		<operation>
 			<search position="before" offset="2"><![CDATA[public function editProduct]]></search>
 			<add><![CDATA[return $product_id;]]></add>
+		</operation>
+		<operation>
+			<search position="after"><![CDATA[deleteProduct($product_id) {]]></search>
+			<add><![CDATA[		$this->db->query("DELETE FROM " . DB_PREFIX . "product_quantity WHERE product_id = '" . (int)$product_id . "'");
+		$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_1c WHERE product_id = '" . (int)$product_id . "'");]]></add>
 		</operation>
 	</file>
 
