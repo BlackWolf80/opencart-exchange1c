@@ -54,6 +54,8 @@ $_['entry_relatedoptions_help']	= 'в настройках связанных о
 $_['entry_dont_use_artsync'] = 'Не искать товары по артикулам:';
 
 $_['entry_order_status'] 	= 'Статус выгруженых заказов:';
+$_['entry_order_status_cancel'] 	= 'Статус отмененных заказов:';
+$_['entry_order_status_completed']	= 'Статус выполненных заказов:';
 $_['entry_order_notify']	= 'Уведомлять пользователей о смене статуса:';
 $_['entry_order_currency'] 	= 'Обозначение валюты (руб.):';
 
