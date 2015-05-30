@@ -223,10 +223,23 @@ class ControllerModuleExchange1c extends Controller {
 		} else {
 			$this->data['exchange1c_relatedoptions'] = $this->config->get('exchange1c_relatedoptions');
 		}
+		
 		if (isset($this->request->post['exchange1c_order_status_to_exchange'])) {
 			$this->data['exchange1c_order_status_to_exchange'] = $this->request->post['exchange1c_order_status_to_exchange'];
 		} else {
 			$this->data['exchange1c_order_status_to_exchange'] = $this->config->get('exchange1c_order_status_to_exchange');
+		}
+		
+		if (isset($this->request->post['exchange1c_order_status_cancel'])) {
+			$this->data['exchange1c_order_status_cancel'] = $this->request->post['exchange1c_order_status_cancel'];
+		} else {
+			$this->data['exchange1c_order_status_cancel'] = $this->config->get('exchange1c_order_status_cancel');
+		}
+		
+		if (isset($this->request->post['exchange1c_order_status_completed'])) {
+			$this->data['exchange1c_order_status_completed'] = $this->request->post['exchange1c_order_status_completed'];
+		} else {
+			$this->data['exchange1c_order_status_completed'] = $this->config->get('exchange1c_order_status_completed');
 		}
 		
 		if (isset($this->request->post['exchange1c_dont_use_artsync'])) {
@@ -468,6 +481,17 @@ class ControllerModuleExchange1c extends Controller {
 		// Проверяем естль ли БД для хранения промежуточных данных.
 		$this->log->write('modeCatalogInit: Проверка базы данных - checkDbSheme()');
 		$this->model_tool_exchange1c->checkDbSheme();
+
+		// Очищаем таблицы
+		$this->model_tool_exchange1c->flushDb(array(
+			'product' 		=> $this->config->get('exchange1c_flush_product'),
+			'category'		=> $this->config->get('exchange1c_flush_category'),
+			'manufacturer'	=> $this->config->get('exchange1c_flush_manufacturer'),
+			'attribute'		=> $this->config->get('exchange1c_flush_attribute'),
+			'full_log'		=> $this->config->get('exchange1c_full_log'),
+			'apply_watermark'	=> $this->config->get('exchange1c_apply_watermark'),
+			'quantity'		=> $this->config->get('exchange1c_flush_quantity')
+		));
 
 		$limit = 100000 * 1024;
 
