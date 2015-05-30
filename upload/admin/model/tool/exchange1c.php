@@ -401,6 +401,11 @@ class ModelToolExchange1c extends Model {
 	
 					$product_id = $this->getProductIdBy1CProductId ($uuid[0]);
 	
+					if (empty($product_id)) {
+						if ($enable_log) $this->log->write('Не найден товар в таблице product_to_1c по Ид 1С [UUID], пропускаем...');
+						continue;
+					}
+					
 					//Цена за единицу
 					if ($offer->Цены) {
 	
@@ -457,6 +462,7 @@ class ModelToolExchange1c extends Model {
 								'quantity' => $quantity
 							);
 							//$data['quantity'] += $quantity;
+							$this->log->write('Запись остатков. Склад ID='.$this->WAREHOUSES[(string)$offer->Склад['ИдСклада']]['id'].', товар ID='.$product_id.', остаток: '.$quantity);
 							$this->setQuantity($this->WAREHOUSES[(string)$offer->Склад['ИдСклада']]['id'], $product_id, $quantity);
 						}
 					}
