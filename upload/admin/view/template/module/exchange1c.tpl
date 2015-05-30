@@ -238,6 +238,28 @@
             </tr>
 
             <tr>
+              <td><?php echo $this->language->get('entry_order_status_cancel'); ?></td>
+              <td>
+                <select name="exchange1c_order_status_cancel">
+                  <?php foreach ($order_statuses as $order_status) { ?>
+                    <option value="<?php echo $order_status['order_status_id'];?>" <?php echo ($exchange1c_order_status_cancel == $order_status['order_status_id'])? 'selected' : '' ;?>><?php echo $order_status['name']; ?></option>
+                  <?php } ?>
+                </select>
+              </td>
+            </tr>
+
+            <tr>
+              <td><?php echo $this->language->get('entry_order_status_completed'); ?></td>
+              <td>
+                <select name="exchange1c_order_status_completed">
+                  <?php foreach ($order_statuses as $order_status) { ?>
+                    <option value="<?php echo $order_status['order_status_id'];?>" <?php echo ($exchange1c_order_status_completed == $order_status['order_status_id'])? 'selected' : '' ;?>><?php echo $order_status['name']; ?></option>
+                  <?php } ?>
+                </select>
+              </td>
+            </tr>
+
+            <tr>
               <td><label for="exchange1c_order_currency"><?php echo $entry_order_currency; ?></label></td>
               <td>
                 <input type="text" name="exchange1c_order_currency" value="<?php echo $exchange1c_order_currency; ?>">
@@ -275,7 +297,8 @@
     </div>
 
     <div style="text-align:center; opacity: .5">
-      <p><?php echo $version; ?> | <a href=https://github.com/zenwalker/opencart-exchange1c><?php echo $source_code; ?></a> <a href="http://zenwalker.ru/lab/opencart-exchange1c"><?php echo $text_homepage; ?></a></p>
+      <p><?php echo $version; ?> | <a href=https://github.com/zenwalker/opencart-exchange1c><?php echo $source_code; ?></a> <a href="http://zenwalker.ru/lab/opencart-exchange1c"><?php echo $text_homepage; ?></a><br />
+			Change by Vitaly E. Kirillov <a href=https://github.com/KirilLoveVE/opencart-exchange1c><?php echo $source_code; ?></a></p>
     </div>
   </div>
 </div>
