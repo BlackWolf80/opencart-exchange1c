@@ -428,30 +428,30 @@ class ControllerModuleExchange1c extends Controller {
 				if (strpos($buffer, 'ПакетПредложений')) {
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'offers.xml');
 					$this->modeImport('offers.xml');
-					//$this->log->write('End of modeImport(offers.xml)');
+					$this->log->write('End of modeImport(offers.xml)');
 				}
 				else if (strpos($buffer, 'Документ')) {
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'orders.xml');
 					$this->modeImport('orders.xml');
-					//$this->log->write('End of modeImport(orders.xml)');
+					$this->log->write('End of modeImport(orders.xml)');
 				}
 				else if (strpos($buffer, 'Классификатор')) {
 					$this->modeCatalogInit(false);
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'import.xml');
 					$this->modeImport('import.xml');
-					//$this->log->write('End of modeImport(import.xml)');
+					$this->log->write('End of modeImport(import.xml)');
 				
 				}
 				else {
-					//$this->log->write('Ошибка при ручной загрузке файла');
+					$this->log->write('Ошибка при ручной загрузке файла');
 					$json['error'] = $this->language->get('text_upload_error');
 					exit;
 				}
 			}
-			//$this->log->write('modeImport comleted');
+			$this->log->write('modeImport comleted');
 			$json['success'] = $this->language->get('text_upload_success');
 		}
-		//$this->log->write('output result');
+		$this->log->write('output result');
 		$this->response->setOutput(json_encode($json));
 	}
 	
@@ -478,20 +478,9 @@ class ControllerModuleExchange1c extends Controller {
 		$this->log->write('modeCatalogInit: Чистим кэш');
 		$this->cleanCacheDir();
 		
-		// Проверяем естль ли БД для хранения промежуточных данных.
+		// Проверяем есть ли БД для хранения промежуточных данных.
 		$this->log->write('modeCatalogInit: Проверка базы данных - checkDbSheme()');
 		$this->model_tool_exchange1c->checkDbSheme();
-
-		// Очищаем таблицы
-		$this->model_tool_exchange1c->flushDb(array(
-			'product' 		=> $this->config->get('exchange1c_flush_product'),
-			'category'		=> $this->config->get('exchange1c_flush_category'),
-			'manufacturer'	=> $this->config->get('exchange1c_flush_manufacturer'),
-			'attribute'		=> $this->config->get('exchange1c_flush_attribute'),
-			'full_log'		=> $this->config->get('exchange1c_full_log'),
-			'apply_watermark'	=> $this->config->get('exchange1c_apply_watermark'),
-			'quantity'		=> $this->config->get('exchange1c_flush_quantity')
-		));
 
 		$limit = 100000 * 1024;
 
@@ -600,6 +589,18 @@ class ControllerModuleExchange1c extends Controller {
         
 		if (strpos($filename, 'import') !== false) {
 			
+			// Очищаем таблицы
+			$this->model_tool_exchange1c->flushDb(array(
+				'product' 		=> $this->config->get('exchange1c_flush_product'),
+				'category'		=> $this->config->get('exchange1c_flush_category'),
+				'manufacturer'	=> $this->config->get('exchange1c_flush_manufacturer'),
+				'attribute'		=> $this->config->get('exchange1c_flush_attribute'),
+				'full_log'		=> $this->config->get('exchange1c_full_log'),
+				'apply_watermark'	=> $this->config->get('exchange1c_apply_watermark'),
+				'quantity'		=> $this->config->get('exchange1c_flush_quantity')
+			));
+
+			$this->log->write('modeImport: ' . $filename. ',' . $language_id);
 			$this->model_tool_exchange1c->parseImport($filename, $language_id);
 
 			if ($this->config->get('exchange1c_fill_parent_cats')) {
@@ -607,6 +608,7 @@ class ControllerModuleExchange1c extends Controller {
 			}
             // Только если выбран способ deadcow_seo
 			if ($this->config->get('exchange1c_seo_url') == 1) {
+				$this->log->write('modeImport: exchange1c_seo_url');
 				$this->load->model('module/deadcow_seo');
 				$this->model_module_deadcow_seo->generateCategories($this->config->get('deadcow_seo_categories_template'), '', 'Russian', true, true);
 				$this->model_module_deadcow_seo->generateProducts($this->config->get('deadcow_seo_products_template'), '.html', 'Russian', true, true);
@@ -644,6 +646,7 @@ class ControllerModuleExchange1c extends Controller {
 		}
 
 		$this->cache->delete('product');
+		$this->log->write('modeImport: return');
 		return;
 	}
 
