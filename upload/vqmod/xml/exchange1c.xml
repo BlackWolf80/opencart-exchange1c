@@ -37,7 +37,30 @@
 		<operation>
 			<search position="after"><![CDATA[deleteProduct($product_id) {]]></search>
 			<add><![CDATA[		$this->db->query("DELETE FROM " . DB_PREFIX . "product_quantity WHERE product_id = '" . (int)$product_id . "'");
-		$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_1c WHERE product_id = '" . (int)$product_id . "'");]]></add>
+		$this->db->query("DELETE FROM " . DB_PREFIX . "product_to_1c WHERE product_id = '" . (int)$product_id . "'");
+		$this->db->query("DELETE FROM " . DB_PREFIX . "product_attribute WHERE product_id = '" . (int)$product_id . "'");]]></add>
+		</operation>
+		<operation>
+			<search position="before"><![CDATA[
+		public function getProductLayouts($product_id) {
+		]]></search>
+		<add><![CDATA[
+	public function getProductQuantity($product_id) {
+		$product_quantity_data = array();
+
+		$query = $this->db->query("SELECT * FROM " . DB_PREFIX . "product_quantity WHERE product_id = '" . (int)$product_id . "'");
+
+		foreach ($query->rows as $result) {
+			$product_quantity_data[] = array(
+				'warehouse_id' => $result['warehouse_id'],
+				'quantity' => $result['quantity']
+			);
+		}
+
+		return $product_quantity_data;
+	}
+
+		]]></add>
 		</operation>
 	</file>
 
