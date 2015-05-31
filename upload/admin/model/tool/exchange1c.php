@@ -18,9 +18,10 @@ class ModelToolExchange1c extends Model {
 	 */
 	public function queryOrders($params) {
 
-        $this->load->model('sale/order');
+		$this->load->model('sale/order');
+		$this->load->model('sale/customer_group');
 
-        if ($params['exchange_status'] != 0) {
+		if ($params['exchange_status'] != 0) {
 			$query = $this->db->query("SELECT order_id FROM `" . DB_PREFIX . "order` WHERE `order_status_id` = " . $params['exchange_status'] . "");
 		} else {
 			$query = $this->db->query("SELECT order_id FROM `" . DB_PREFIX . "order` WHERE `date_added` >= '" . $params['from_date'] . "'");
