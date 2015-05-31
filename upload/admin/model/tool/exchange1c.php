@@ -458,9 +458,7 @@ class ModelToolExchange1c extends Model {
 
 		// Инициализируем склады
     if ($xml->ПакетПредложений->Склады->Склад) {
-			foreach ($xml->ПакетПредложений->Склады->Склад as $key => $type) {
-				$this->insertWarehouse($xml->ПакетПредложений->Склады->Склад);
-			}
+			$this->insertWarehouse($xml->ПакетПредложений->Склады->Склад);
 		}
         
 		// Инициализируем типы цен
@@ -572,11 +570,13 @@ class ModelToolExchange1c extends Model {
 							$this->setQuantity($this->WAREHOUSES[(string)$offer->Склад['ИдСклада']]['id'], $product_id, $quantity);
 						}
 					}
-					$this->log->write('Общий остаток: '.$data['quantity']);
+					$this->log->write('Общий остаток по всем складам: '.$data['quantity']);
 				}
 
-				//Характеристики
+				//Характеристики (отсутствуют в XML 2.07 и выше)
 				if ($offer->ХарактеристикиТовара->ХарактеристикаТовара) {
+					
+					$this->log->write('Разборка характеристик товара...');
 					
 					$product_option_value_data = array();
 					$product_option_data = array();
@@ -656,6 +656,9 @@ class ModelToolExchange1c extends Model {
 				if (!$exchange1c_relatedoptions || $new_product) {
 					
 					if ($offer->СкидкиНаценки) {
+						
+						$this->log->write('Скидки и наценки на товары...');
+						
 						$value = array();
 						foreach ($offer->СкидкиНаценки->СкидкаНаценка as $discount) {
 							$value = array(
@@ -833,8 +836,8 @@ class ModelToolExchange1c extends Model {
 				} else {
 					$data['description'] = isset($product->Описание) ? (string)$product->Описание : '';
 				}
-				$this->log->write("Описание:");
-				$this->log->write($data['description']);
+				//$this->log->write("Описание:");
+				//$this->log->write($data['description']);
 
 				if ($product->Статус) $data['status'] = (string)$product->Статус;
                 
@@ -1214,7 +1217,7 @@ class ModelToolExchange1c extends Model {
 
 	private function getProductWithAllData($product_id) {
 
-		//$this->log->write('getProductWithAllData(product_id)');
+		$this->log->write('getProductWithAllData: $product_id='.$product_id);
 
 		$this->load->model('catalog/product');
 		$query = $this->db->query("SELECT DISTINCT * FROM " . DB_PREFIX . "product p LEFT JOIN " . DB_PREFIX . "product_description pd ON (p.product_id = pd.product_id) WHERE p.product_id = '" . (int)$product_id . "' AND pd.language_id = '" . (int)$this->config->get('config_language_id') . "'");
@@ -1246,7 +1249,7 @@ class ModelToolExchange1c extends Model {
 			
 			$data = array_merge($data, array('product_discount' => $this->model_catalog_product->getProductDiscounts($product_id)));
 			$data = array_merge($data, array('product_special' => $this->model_catalog_product->getProductSpecials($product_id)));
-            $data = array_merge($data, array('product_filter' => $this->model_catalog_product->getProductFilters($product_id)));
+			$data = array_merge($data, array('product_filter' => $this->model_catalog_product->getProductFilters($product_id)));
 			$data = array_merge($data, array('product_download' => $this->model_catalog_product->getProductDownloads($product_id)));
 			$data = array_merge($data, array('product_category' => $this->model_catalog_product->getProductCategories($product_id)));
 			$data = array_merge($data, array('product_store' => $this->model_catalog_product->getProductStores($product_id)));
@@ -1264,6 +1267,9 @@ class ModelToolExchange1c extends Model {
 		$query = $this->db->query('SELECT * FROM ' . DB_PREFIX . 'url_alias WHERE query LIKE "product_id='.$product_id.'"');
 		if ($query->num_rows) $data['keyword'] = $query->row['keyword'];
 
+		$this->log->write('getProductWithAllData: return $data:');
+		//$this->log->write($data);
+		
 		return $data;
 	}
 
@@ -1466,27 +1472,20 @@ class ModelToolExchange1c extends Model {
 		// Проверяем что обновлять?
 		if ($this->config->get('exchange1c_relatedoptions')) {
 			if ($product_id == false) {
-				//$this->log->write('1270 setProduct');
+				$this->log->write('updateProduct: setProduct('.$product.','.$language_id.')');
 				$this->setProduct($product, $language_id);
 				return;
 			}
 		} else {
 			if ($product_id !== false) {
+				$this->log->write('updateProduct: getProductIdBy1CProductId('.$product['1c_id'].')');
 				$product_id = $this->getProductIdBy1CProductId($product['1c_id']);
-				//$this->log->write('1277 getProductIdBy1CProductId');
 			}
 		}
 
 		// Обновляем описание продукта
-		//$this->log->write($product['description']);
-		//$this->log->write("1283 Обновляем товар ID = " . $product_id);
-		
+		$this->log->write('updateProduct: getProductWithAllData('.$product_id.')');
 		$product_old = $this->getProductWithAllData($product_id);
-
-		// Обновляем описание
-		//$product_old['product_description'][$language_id]['description'] = $product['description'];
-		//$this->log->write('1289');
-		//$this->log->write($product_old['product_description']);
 
 		// Работаем с ценой на разные варианты товаров.
 		if(!empty($product['product_option'][0])){
@@ -1499,6 +1498,8 @@ class ModelToolExchange1c extends Model {
 
 				$product['price'] = (float) $product_old['price'];
 
+				$this->log->write("updateProduct: установка цены в массив product['price'] (".$product['price'].")");
+				
 			}
 			else{
 				$product['product_option'][0]['product_option_value'][0]['price'] = 0;
@@ -1511,8 +1512,9 @@ class ModelToolExchange1c extends Model {
 		$product_old = $this->initProduct($product, $product_old, $language_id);
 
 		//Редактируем продукт
-		//$this->log->write('1315 editProduct_1');
-		//$this->log->write($product_old['product_description']);
+		$this->log->write('updateProduct: model_catalog_product->editProduct('.$product_id.')');
+		//$this->log->write('updateProduct: Массив product_old:');
+		//$this->log->write($product_old);
 		$product_id = $this->model_catalog_product->editProduct($product_id, $product_old);
 
 	}
