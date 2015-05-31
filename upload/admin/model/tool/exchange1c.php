@@ -1990,6 +1990,7 @@ class ModelToolExchange1c extends Model {
 							FOREIGN KEY (product_id) REFERENCES '. DB_PREFIX .'product(product_id) ON DELETE CASCADE
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
+			$this->log->write('Добавлена таблица product_to_1c');
 		}
 
 		$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'category_to_1c"');
@@ -2005,6 +2006,7 @@ class ModelToolExchange1c extends Model {
 							FOREIGN KEY (category_id) REFERENCES '. DB_PREFIX .'category(category_id) ON DELETE CASCADE
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
+			$this->log->write('Добавлена таблица category_to_1c');
 		}
 
 		$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'attribute_to_1c"');
@@ -2020,6 +2022,7 @@ class ModelToolExchange1c extends Model {
 							FOREIGN KEY (attribute_id) REFERENCES '. DB_PREFIX .'attribute(attribute_id) ON DELETE CASCADE
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
+			$this->log->write('Добавлена таблица attribute_to_1c');
 		}
     	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'unit"');
 		if(!$query->num_rows) {
@@ -2032,6 +2035,7 @@ class ModelToolExchange1c extends Model {
                             PRIMARY KEY (`unit_id`) 
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
+			$this->log->write('Добавлена таблица unit для хранения единиц измерений товаров');
 		}
     	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'product_quantity"');
 		if(!$query->num_rows) {
@@ -2045,6 +2049,7 @@ class ModelToolExchange1c extends Model {
 						KEY (`warehouse_id`)                            
 					) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
+			$this->log->write('Добавлена таблица product_quantity для хранения остатков по складам');
 		}
     	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'warehouse"');
 		if(!$query->num_rows) {
@@ -2057,13 +2062,14 @@ class ModelToolExchange1c extends Model {
                             PRIMARY KEY (`warehouse_id`)
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
+			$this->log->write('Добавлена таблица warehouse для хранения складов');
 		}
 		// Добавляем поле Гарантия
 		$query = $this->db->query('SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = "' . DB_PREFIX . 'product" AND COLUMN_NAME = "guarantee"');
 		if(!$query->num_rows) {
 			$query = $this->db->query('ALTER TABLE `' . DB_PREFIX . 'product` ADD `guarantee` varchar(32) NULL');
-			$this->log->write('Добавлено поле Гарантия в таблицу товаров');			
+			$this->log->write('Добавлено поле guarantee в таблицу product');			
 		} 
-	}
-
+		$this->log->write('checkDbSheme: завершена');
+	} // checkDbSheme
 }
