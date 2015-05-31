@@ -2090,7 +2090,9 @@ class ModelToolExchange1c extends Model {
 		}
 
 		// Добавляем поле Гарантия
-		$query = $this->db->query('SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = "' . DB_PREFIX . 'product" AND COLUMN_NAME = "guarantee"');
+		//$query = $this->db->query('SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = "' . DB_PREFIX . 'product" AND COLUMN_NAME = "guarantee"');
+		$query = $this->db->query('SHOW COLUMNS FROM `' . DB_PREFIX . 'product` LIKE "guarantee%"');
+		//show columns from `oc_product` like 'guarantee%'
 
 		if(!$query->num_rows) {
 			$query = $this->db->query('ALTER TABLE `' . DB_PREFIX . 'product` ADD `guarantee` varchar(32) NULL');
