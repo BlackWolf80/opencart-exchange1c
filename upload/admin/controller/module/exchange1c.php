@@ -651,6 +651,7 @@ class ControllerModuleExchange1c extends Controller {
 	}
 
 	public function modeQueryOrders() {
+		
 		if (!isset($this->request->cookie['key'])) {
 			echo "Cookie fail\n";
 			return;
@@ -664,13 +665,22 @@ class ControllerModuleExchange1c extends Controller {
 
 		$this->load->model('tool/exchange1c');
 
-        $orders = $this->model_tool_exchange1c->queryOrders(array(
-			 'from_date' 	=> $this->config->get('exchange1c_order_date')
-			,'exchange_status'	=> $this->config->get('exchange1c_order_status_to_exchange')
-			,'new_status'	=> $this->config->get('exchange1c_order_status')
-			,'notify'		=> $this->config->get('exchange1c_order_notify')
-			,'currency'		=> $this->config->get('exchange1c_order_currency') ? $this->config->get('exchange1c_order_currency') : 'руб.'
-		));
+		//$this->log->write('modeQueryOrders: model_tool_exchange1c->queryOrders');
+		//$this->log->write('Параметр: from_date='.$this->config->get('exchange1c_order_date')); 
+		//$this->log->write('Параметр: exchange_status='.$this->config->get('exchange1c_order_status_to_exchange')); 
+		//$this->log->write('Параметр: new_status='.$this->config->get('exchange1c_order_status')); 
+		//$this->log->write('Параметр: notify='.$this->config->get('exchange1c_order_notify')); 
+		//$this->log->write('Параметр: currency='.$this->config->get('exchange1c_order_currency') ? $this->config->get('exchange1c_order_currency') : 'руб.'); 
+			
+		$orders = $this->model_tool_exchange1c->queryOrders(
+			array(
+				 'from_date' 	=> $this->config->get('exchange1c_order_date')
+				,'exchange_status'	=> $this->config->get('exchange1c_order_status_to_exchange')
+				,'new_status'	=> $this->config->get('exchange1c_order_status')
+				,'notify'		=> $this->config->get('exchange1c_order_notify')
+				,'currency'		=> $this->config->get('exchange1c_order_currency') ? $this->config->get('exchange1c_order_currency') : 'руб.'
+			)
+		);
 
 		echo iconv('utf-8', 'cp1251', $orders);
 	}
