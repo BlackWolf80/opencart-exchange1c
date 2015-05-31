@@ -1924,7 +1924,7 @@ class ModelToolExchange1c extends Model {
 			if ($enable_log)
 				$this->log->write('TRUNCATE TABLE ' . DB_PREFIX . 'manufacturer');
 
-			$query = $this->db->query("SHOW TABLES FROM " . DB_DATABASE . " LIKE '" . DB_PREFIX . "manufacturer_description'");
+			$query = $this->db->query("SHOW TABLES FROM `" . DB_DATABASE . "` LIKE '" . DB_PREFIX . "manufacturer_description'");
 			if ($query->num_rows) {
 				if ($enable_log) {
 					$this->log->write("Очистка таблиц описания производителей:");
