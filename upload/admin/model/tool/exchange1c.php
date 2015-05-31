@@ -1977,6 +1977,7 @@ class ModelToolExchange1c extends Model {
 	 */
 	public function checkDbSheme() {
 
+		// Связь товаров с 1С по Ид
 		$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'product_to_1c"');
 
 		if(!$query->num_rows) {
@@ -1991,8 +1992,11 @@ class ModelToolExchange1c extends Model {
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 			$this->log->write('Добавлена таблица product_to_1c');
+		} else {
+			$this->log->write('Таблица product_to_1c уже существует');
 		}
 
+		// Связь категорий в 1С по Ид
 		$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'category_to_1c"');
 
 		if(!$query->num_rows) {
@@ -2007,8 +2011,11 @@ class ModelToolExchange1c extends Model {
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 			$this->log->write('Добавлена таблица category_to_1c');
+		} else {
+			$this->log->write('Таблица category_to_1c уже существует');
 		}
 
+		// Свойства из 1С
 		$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'attribute_to_1c"');
 
 		if(!$query->num_rows) {
@@ -2023,8 +2030,13 @@ class ModelToolExchange1c extends Model {
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 			$this->log->write('Добавлена таблица attribute_to_1c');
+		} else {
+			$this->log->write('Таблица product_to_1c уже существует');
 		}
-    	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'unit"');
+		
+		// Единицы измерения товаров
+		$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'unit"');
+		
 		if(!$query->num_rows) {
 			$this->db->query(
 					'CREATE TABLE
@@ -2036,8 +2048,13 @@ class ModelToolExchange1c extends Model {
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 			$this->log->write('Добавлена таблица unit для хранения единиц измерений товаров');
+		} else {
+			$this->log->write('Таблица unit уже существует');
 		}
-    	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'product_quantity"');
+		
+		// остатки по складам
+		$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'product_quantity"');
+		
 		if(!$query->num_rows) {
 			$this->db->query(
 					'CREATE TABLE
@@ -2050,8 +2067,13 @@ class ModelToolExchange1c extends Model {
 					) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 			$this->log->write('Добавлена таблица product_quantity для хранения остатков по складам');
+		} else {
+			$this->log->write('Таблица product_quantity уже существует');
 		}
-    	$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'warehouse"');
+		
+		// склады
+		$query = $this->db->query('SHOW TABLES LIKE "' . DB_PREFIX . 'warehouse"');
+		
 		if(!$query->num_rows) {
 			$this->db->query(
 					'CREATE TABLE
@@ -2063,12 +2085,18 @@ class ModelToolExchange1c extends Model {
 						) ENGINE=MyISAM DEFAULT CHARSET=utf8'
 			);
 			$this->log->write('Добавлена таблица warehouse для хранения складов');
+		} else {
+			$this->log->write('Таблица warehouse уже существует');
 		}
+
 		// Добавляем поле Гарантия
 		$query = $this->db->query('SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = "' . DB_PREFIX . 'product" AND COLUMN_NAME = "guarantee"');
+
 		if(!$query->num_rows) {
 			$query = $this->db->query('ALTER TABLE `' . DB_PREFIX . 'product` ADD `guarantee` varchar(32) NULL');
 			$this->log->write('Добавлено поле guarantee в таблицу product');			
+		} else {
+			$this->log->write('Поле guarantee уже существует в таблице product');
 		} 
 		$this->log->write('checkDbSheme: завершена');
 	} // checkDbSheme
