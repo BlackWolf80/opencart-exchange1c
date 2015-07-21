@@ -40,7 +40,7 @@ class ModelToolExchange1c extends Model {
 				$time = date('H:i:s', strtotime($order['date_added']));
 
 				$customer_group = $this->model_sale_customer_group->getCustomerGroup($order['customer_group_id']);
-				$this->log->write('Группа пользователей: '.$customer_group['name']);
+				//$this->log->write('Группа пользователей: '.$customer_group['name']);
 
 				$document['Документ' . $document_counter] = array(
 					 'Ид'          => $order['order_id']
@@ -339,37 +339,37 @@ class ModelToolExchange1c extends Model {
 
     if ($xml->Документ) {
     	foreach ($xml->Документ as $order) {
-    		$this->log->write("Ид документа: " . $order->Ид);
-    		$this->log->write("Номер: " . $order->Номер);
-    		$this->log->write("Дата: " . $order->Дата);
-    		$this->log->write("ХозОперация: " . $order->ХозОперация);
-    		$this->log->write("Роль: " . $order->Роль);
-    		$this->log->write("Сумма: " . $order->Сумма);
-    		$this->log->write("Время: " . $order->Время);
-    		$this->log->write("Срок платежа: " . $order->СрокПлатежа);
+    		//$this->log->write("Ид документа: " . $order->Ид);
+    		//$this->log->write("Номер: " . $order->Номер);
+    		//$this->log->write("Дата: " . $order->Дата);
+    		//$this->log->write("ХозОперация: " . $order->ХозОперация);
+    		//$this->log->write("Роль: " . $order->Роль);
+    		//$this->log->write("Сумма: " . $order->Сумма);
+    		//$this->log->write("Время: " . $order->Время);
+    		//$this->log->write("Срок платежа: " . $order->СрокПлатежа);
 				
 				$order_db = $this->model_sale_order->getOrder((int)$order->Номер);
 				$order_status_info = $this->model_localisation_order_status->getOrderStatus((int)$order_db['order_status_id']); 
-				$this->log->write($order_db);
-				$this->log->write($order_status_info);
+				//$this->log->write($order_db);
+				//$this->log->write($order_status_info);
 				
 				if ($order->Контрагенты->Контрагент) {
 					foreach ($order->Контрагенты->Контрагент as $client) {
-						$this->log->write("Клиент: " . $client->Наименование);
+						//$this->log->write("Клиент: " . $client->Наименование);
 					}
 				}
 				
 				if ($order->Товары->Товар) {
 					foreach ($order->Товары->Товар as $product) {
-						$this->log->write("Товар");
-						$this->log->write(" -> Ид: " . $product->Ид);
-						$this->log->write(" -> Артикул: " . $product->Артикул);
-						$this->log->write(" -> Наименование: " . $product->Наименование);
-						$this->log->write(" -> Цена: " . $product->ЦенаЗаЕдиницу);
-						$this->log->write(" -> Количество: " . $product->Количество);
-						$this->log->write(" -> Сумма: " . $product->Сумма);
-						$this->log->write(" -> Единица: " . $product->Единица);
-						$this->log->write(" -> Базовая единица: " . $product->БазоваяЕдиница['НаименованиеПолное']);
+						//$this->log->write("Товар");
+						//$this->log->write(" -> Ид: " . $product->Ид);
+						//$this->log->write(" -> Артикул: " . $product->Артикул);
+						//$this->log->write(" -> Наименование: " . $product->Наименование);
+						//$this->log->write(" -> Цена: " . $product->ЦенаЗаЕдиницу);
+						//$this->log->write(" -> Количество: " . $product->Количество);
+						//$this->log->write(" -> Сумма: " . $product->Сумма);
+						//$this->log->write(" -> Единица: " . $product->Единица);
+						//$this->log->write(" -> Базовая единица: " . $product->БазоваяЕдиница['НаименованиеПолное']);
 					}
 				}
 				
@@ -766,7 +766,7 @@ class ModelToolExchange1c extends Model {
 		// Свойства
 		if ($enable_log) $this->log->write('Загрузка Свойств...');
 		if ($xml->Классификатор->Свойства) $this->insertAttribute($xml->Классификатор->Свойства->Свойство);
-		$this->log->write('В базу загружены свойства:');
+		$this->log->write('В базу загружены свойства');
 
 		$this->load->model('catalog/manufacturer');
 
@@ -942,10 +942,10 @@ class ModelToolExchange1c extends Model {
 											)
 										)
 									);
-							}
-						}
-					}
-				}
+							} // switch
+						}	// if (isset($this->PROPERTIES[(string)$property->Ид]['name'])) {
+					} // foreach ($product->ЗначенияСвойств->ЗначенияСвойства as $property)
+				} // if ($product->ЗначенияСвойств)
 
 				// Реквизиты продукта
 				if($product->ЗначенияРеквизитов) {
@@ -1109,11 +1109,15 @@ class ModelToolExchange1c extends Model {
 					$data = $this->model_catalog_category->getCategory($category_id);
 					$data['category_description'] = $this->model_catalog_category->getCategoryDescriptions($category_id);
 					$data = $this->initCategory($category, $parent, $data, $language_id);
+					$this->log->write('insertCategory: getCategory');
+					//$this->log->write($data);					
 					$this->model_catalog_category->editCategory($category_id, $data);
 				}
 				else {
 					$data = $this->initCategory($category, $parent, array(), $language_id);
 					//$category_id = $this->getCategoryIdByName($data['category_description'][1]['name']) ? $this->getCategoryIdByName($data['category_description'][1]['name']) : $this->model_catalog_category->addCategory($data);
+					$this->log->write('insertCategory: initCategory');
+					//$this->log->write($data);					
 					$category_id = $this->model_catalog_category->addCategory($data);
 					$this->db->query('INSERT INTO `' . DB_PREFIX . 'category_to_1c` SET category_id = ' . (int)$category_id . ', `1c_category_id` = "' . $this->db->escape($id) . '"');
 				}
@@ -1473,19 +1477,19 @@ class ModelToolExchange1c extends Model {
 		// Проверяем что обновлять?
 		if ($this->config->get('exchange1c_relatedoptions')) {
 			if ($product_id == false) {
-				$this->log->write('updateProduct: setProduct('.$product.','.$language_id.')');
+				//$this->log->write('updateProduct: setProduct('.$product.','.$language_id.')');
 				$this->setProduct($product, $language_id);
 				return;
 			}
 		} else {
 			if ($product_id !== false) {
-				$this->log->write('updateProduct: getProductIdBy1CProductId('.$product['1c_id'].')');
+				//$this->log->write('updateProduct: getProductIdBy1CProductId('.$product['1c_id'].')');
 				$product_id = $this->getProductIdBy1CProductId($product['1c_id']);
 			}
 		}
 
 		// Обновляем описание продукта
-		$this->log->write('updateProduct: getProductWithAllData('.$product_id.')');
+		//$this->log->write('updateProduct: getProductWithAllData('.$product_id.')');
 		$product_old = $this->getProductWithAllData($product_id);
 
 		// Работаем с ценой на разные варианты товаров.
@@ -1499,7 +1503,7 @@ class ModelToolExchange1c extends Model {
 
 				$product['price'] = (float) $product_old['price'];
 
-				$this->log->write("updateProduct: установка цены в массив product['price'] (".$product['price'].")");
+				//$this->log->write("updateProduct: установка цены в массив product['price'] (".$product['price'].")");
 				
 			}
 			else{
@@ -1513,7 +1517,7 @@ class ModelToolExchange1c extends Model {
 		$product_old = $this->initProduct($product, $product_old, $language_id);
 
 		//Редактируем продукт
-		$this->log->write('updateProduct: model_catalog_product->editProduct('.$product_id.')');
+		//$this->log->write('updateProduct: model_catalog_product->editProduct('.$product_id.')');
 		//$this->log->write('updateProduct: Массив product_old:');
 		//$this->log->write($product_old);
 		$product_id = $this->model_catalog_product->editProduct($product_id, $product_old);
@@ -1632,11 +1636,11 @@ class ModelToolExchange1c extends Model {
         if ($group_id === false)
             return false;
         
-        $this->log->write("Поиск фильтра по имени (". $name . ")");
+        //$this->log->write("Поиск фильтра по имени (". $name . ")");
         $query = $this->db->query("SELECT filter_id FROM `" . DB_PREFIX . "filter_description` WHERE `name` = '" . $name . "'");
         
         if ($query->num_rows) {
-            $this->log->write("ID фильтра " . $query->row['filter_id']);
+            //$this->log->write("ID фильтра " . $query->row['filter_id']);
             return $query->row['filter_id'];
         }
         else {
@@ -1698,16 +1702,16 @@ class ModelToolExchange1c extends Model {
             foreach ($query->rows as $row) {
                 $category_id = $row['category_id'];
                 foreach ($filters as $filter_id) {
-                    $this->log->write("обновление фильтров категорий: category_id =" .$category_id. " product_id: " . $product_id . " filter_id: ". $filter_id);
+                    //$this->log->write("обновление фильтров категорий: category_id =" .$category_id. " product_id: " . $product_id . " filter_id: ". $filter_id);
                     $querycat = $this->db->query("SELECT filter_id FROM `" . DB_PREFIX . "category_filter` WHERE filter_id = '" . $filter_id . "' and category_id = '" . $category_id . "'");
                     if ($querycat->num_rows) {
-                        $this->log->write(" фильтр категории найден ");
+                        //$this->log->write(" фильтр категории найден ");
                     }
                     else {
-                        $this->log->write(" фильтр  категории не найден, создается новый ");
+                        //$this->log->write(" фильтр  категории не найден, создается новый ");
                         $sqlq = "INSERT INTO `category_filter` (`category_id`, `filter_id`) VALUES (". (int) $category_id.",". (int)$filter_id.")";
                         $this->db->query($sqlq);
-                        $this->log->write($sqlq);
+                        //$this->log->write($sqlq);
                     }
                 }
             }
@@ -1716,20 +1720,20 @@ class ModelToolExchange1c extends Model {
      
      private function updateProductFilter($product_id, $filter) {
         
-        $this->log->write("updateProductFilter");
+        //$this->log->write("updateProductFilter");
         foreach ($filter as $filter_id) {
-            $this->log->write("обновление фильтров: product_id: " . $product_id . " filter_id: ". $filter_id);
+            //$this->log->write("обновление фильтров: product_id: " . $product_id . " filter_id: ". $filter_id);
             
             $query = $this->db->query("SELECT filter_id FROM `" . DB_PREFIX . "product_filter` WHERE filter_id = '" . $filter_id . "' and product_id = '" . $product_id . "'");
             if ($query->num_rows) {
-                $this->log->write(" фильтр найден ");
+                //$this->log->write(" фильтр найден ");
                 return false;
             }
             else {
-                $this->log->write(" фильтр не найден, создается новый ");
+                //$this->log->write(" фильтр не найден, создается новый ");
                 $sqlq = "INSERT INTO `" .DB_PREFIX. "product_filter` SET product_id = '" . $product_id . "', filter_id = '" . $filter_id . "'";
                 $this->db->query($sqlq);
-                $this->log->write($sqlq);
+                //$this->log->write($sqlq);
                 return true;
             }
         }
@@ -1994,7 +1998,7 @@ class ModelToolExchange1c extends Model {
 			);
 			$this->log->write('Добавлена таблица product_to_1c');
 		} else {
-			$this->log->write('Таблица product_to_1c уже существует');
+			//$this->log->write('Таблица product_to_1c уже существует');
 		}
 
 		// Связь категорий в 1С по Ид
@@ -2013,7 +2017,7 @@ class ModelToolExchange1c extends Model {
 			);
 			$this->log->write('Добавлена таблица category_to_1c');
 		} else {
-			$this->log->write('Таблица category_to_1c уже существует');
+			//$this->log->write('Таблица category_to_1c уже существует');
 		}
 
 		// Свойства из 1С
@@ -2032,7 +2036,7 @@ class ModelToolExchange1c extends Model {
 			);
 			$this->log->write('Добавлена таблица attribute_to_1c');
 		} else {
-			$this->log->write('Таблица product_to_1c уже существует');
+			//$this->log->write('Таблица product_to_1c уже существует');
 		}
 		
 		// Единицы измерения товаров
@@ -2050,7 +2054,7 @@ class ModelToolExchange1c extends Model {
 			);
 			$this->log->write('Добавлена таблица unit для хранения единиц измерений товаров');
 		} else {
-			$this->log->write('Таблица unit уже существует');
+			//$this->log->write('Таблица unit уже существует');
 		}
 		
 		// остатки по складам
@@ -2069,7 +2073,7 @@ class ModelToolExchange1c extends Model {
 			);
 			$this->log->write('Добавлена таблица product_quantity для хранения остатков по складам');
 		} else {
-			$this->log->write('Таблица product_quantity уже существует');
+			//$this->log->write('Таблица product_quantity уже существует');
 		}
 		
 		// склады
@@ -2087,7 +2091,7 @@ class ModelToolExchange1c extends Model {
 			);
 			$this->log->write('Добавлена таблица warehouse для хранения складов');
 		} else {
-			$this->log->write('Таблица warehouse уже существует');
+			//$this->log->write('Таблица warehouse уже существует');
 		}
 
 		// Добавляем поле Гарантия
@@ -2099,7 +2103,7 @@ class ModelToolExchange1c extends Model {
 			$query = $this->db->query('ALTER TABLE `' . DB_PREFIX . 'product` ADD `guarantee` varchar(32) NULL');
 			$this->log->write('Добавлено поле guarantee в таблицу product');			
 		} else {
-			$this->log->write('Поле guarantee уже существует в таблице product');
+			//$this->log->write('Поле guarantee уже существует в таблице product');
 		} 
 		$this->log->write('checkDbSheme: завершена');
 	} // checkDbSheme
