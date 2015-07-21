@@ -428,18 +428,18 @@ class ControllerModuleExchange1c extends Controller {
 				if (strpos($buffer, 'ПакетПредложений')) {
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'offers.xml');
 					$this->modeImport('offers.xml');
-					$this->log->write('End of modeImport(offers.xml)');
+					//$this->log->write('End of modeImport(offers.xml)');
 				}
 				else if (strpos($buffer, 'Документ')) {
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'orders.xml');
 					$this->modeImport('orders.xml');
-					$this->log->write('End of modeImport(orders.xml)');
+					//$this->log->write('End of modeImport(orders.xml)');
 				}
 				else if (strpos($buffer, 'Классификатор')) {
 					$this->modeCatalogInit(false);
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'import.xml');
 					$this->modeImport('import.xml');
-					$this->log->write('End of modeImport(import.xml)');
+					//$this->log->write('End of modeImport(import.xml)');
 				
 				}
 				else {
@@ -448,10 +448,10 @@ class ControllerModuleExchange1c extends Controller {
 					exit;
 				}
 			}
-			$this->log->write('modeImport comleted');
+			//$this->log->write('modeImport comleted');
 			$json['success'] = $this->language->get('text_upload_success');
 		}
-		$this->log->write('output result');
+		//$this->log->write('output result');
 		$this->response->setOutput(json_encode($json));
 	}
 	
@@ -479,7 +479,7 @@ class ControllerModuleExchange1c extends Controller {
 		$this->cleanCacheDir();
 		
 		// Проверяем есть ли БД для хранения промежуточных данных.
-		$this->log->write('modeCatalogInit: Проверка базы данных - checkDbSheme()');
+		//$this->log->write('modeCatalogInit: Проверка базы данных - checkDbSheme()');
 		$this->model_tool_exchange1c->checkDbSheme();
 
 		$limit = 100000 * 1024;
@@ -495,8 +495,10 @@ class ControllerModuleExchange1c extends Controller {
 	public function modeSaleInit() {
 		$limit = 100000 * 1024;
 	
-		echo "zip=no\n";
-		echo "file_limit=".$limit."\n";
+		echo "zip=no\n</br>";
+		echo "file_limit=".$limit."\n</br>";
+		echo "PHP version: " . PHP_VERSION . "\n</br>";
+		echo "Version: ";
 	}
 	
 	public function modeFile() {
@@ -585,7 +587,7 @@ class ControllerModuleExchange1c extends Controller {
 		// Определяем текущую локаль
 		$language_id = $this->model_tool_exchange1c->getLanguageId($this->config->get('config_language'));
 
-		$this->log->write('Имя файла: ' . $filename);
+		//$this->log->write('Имя файла: ' . $filename);
         
 		if (strpos($filename, 'import') !== false) {
 			
@@ -600,7 +602,7 @@ class ControllerModuleExchange1c extends Controller {
 				'quantity'		=> $this->config->get('exchange1c_flush_quantity')
 			));
 
-			$this->log->write('modeImport: ' . $filename. ',' . $language_id);
+			//$this->log->write('modeImport: ' . $filename. ',' . $language_id);
 			$this->model_tool_exchange1c->parseImport($filename, $language_id);
 
 			if ($this->config->get('exchange1c_fill_parent_cats')) {
@@ -608,14 +610,14 @@ class ControllerModuleExchange1c extends Controller {
 			}
             // Только если выбран способ deadcow_seo
 			if ($this->config->get('exchange1c_seo_url') == 1) {
-				$this->log->write('modeImport: exchange1c_seo_url');
+				//$this->log->write('modeImport: exchange1c_seo_url');
 				$this->load->model('module/deadcow_seo');
 				$this->model_module_deadcow_seo->generateCategories($this->config->get('deadcow_seo_categories_template'), '', 'Russian', true, true);
 				$this->model_module_deadcow_seo->generateProducts($this->config->get('deadcow_seo_products_template'), '.html', 'Russian', true, true);
 				$this->model_module_deadcow_seo->generateManufacturers($this->config->get('deadcow_seo_manufacturers_template'), '', 'Russian', true, true);
 				
-        $this->model_module_deadcow_seo->generateProductsMetaKeywords($this->config->get('deadcow_seo_meta_template'), $this->config->get('deadcow_seo_yahoo_id'), 'Russian', false);
-        $this->model_module_deadcow_seo->generateTags($this->config->get('deadcow_seo_tags_template'), 'Russian', false);
+				$this->model_module_deadcow_seo->generateProductsMetaKeywords($this->config->get('deadcow_seo_meta_template'), $this->config->get('deadcow_seo_yahoo_id'), 'Russian', false);
+				$this->model_module_deadcow_seo->generateTags($this->config->get('deadcow_seo_tags_template'), 'Russian', false);
 				$this->model_module_deadcow_seo->generateCategoriesMetaKeywords($this->config->get('deadcow_seo_categories_template'), 'Russian');
 			}
 
@@ -646,7 +648,7 @@ class ControllerModuleExchange1c extends Controller {
 		}
 
 		$this->cache->delete('product');
-		$this->log->write('modeImport: return');
+		//$this->log->write('modeImport: return');
 		return;
 	}
 
