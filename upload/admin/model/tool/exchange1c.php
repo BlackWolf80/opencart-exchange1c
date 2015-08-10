@@ -762,11 +762,21 @@ class ModelToolExchange1c extends Model {
 		// Группы
 		if ($enable_log) $this->log->write('Загрузка категорий...');
 		if($xml->Классификатор->Группы) $this->insertCategory($xml->Классификатор->Группы->Группа, 0, $language_id);
+		$this->log->write('CATEGORIES:');
+		$this->log->write($this->CATEGORIES);
 
-		// Свойства
-		if ($enable_log) $this->log->write('Загрузка Свойств...');
-		if ($xml->Классификатор->Свойства) $this->insertAttribute($xml->Классификатор->Свойства->Свойство);
-		$this->log->write('В базу загружены свойства');
+		if ($this->VERSION_XML == '2.03') {
+			// Свойства
+			if ($enable_log) $this->log->write('Загрузка Свойств...');
+			if ($xml->Классификатор->Свойства) $this->insertAttribute($xml->Классификатор->Свойства->СвойствоНоменклатуры);
+			$this->log->write('В базу загружены свойства');
+		} else {
+			// Свойства
+			if ($enable_log) $this->log->write('Загрузка Свойств...');
+			if ($xml->Классификатор->Свойства) $this->insertAttribute($xml->Классификатор->Свойства->Свойство);
+			$this->log->write('В базу загружены свойства');
+		}
+		
 
 		$this->load->model('catalog/manufacturer');
 
@@ -1264,9 +1274,9 @@ class ModelToolExchange1c extends Model {
 
 			$result['product_filter']   = (isset($product['product_filter'])) ? $product['product_filter'] : (isset($data['product_filter']) ? $data['product_filter'] : array());
             
-			if (VERSION == '1.5.3.1') {
-				$data = array_merge($data, array('product_tag' => $this->model_catalog_product->getProductTags($product_id)));
-			}
+			//if (VERSION == '1.5.3.1') {
+			//	$data = array_merge($data, array('product_tag' => $this->model_catalog_product->getProductTags($product_id)));
+			//}
 		}
 
 		$query = $this->db->query('SELECT * FROM ' . DB_PREFIX . 'url_alias WHERE query LIKE "product_id='.$product_id.'"');
@@ -1336,9 +1346,9 @@ class ModelToolExchange1c extends Model {
 			,'product_quantity' => (isset($product['product_quantity'])) ? $product['product_quantity'] : (isset($data['product_quantity']) ? $data['product_quantity']: array())
 		);
 
-		if (VERSION == '1.5.3.1') {
-			$result['product_tag'] = (isset($product['product_tag'])) ? $product['product_tag'] : (isset($data['product_tag']) ? $data['product_tag']: array());
-		}
+		//if (VERSION == '1.5.3.1') {
+		//	$result['product_tag'] = (isset($product['product_tag'])) ? $product['product_tag'] : (isset($data['product_tag']) ? $data['product_tag']: array());
+		//}
 
 		$result['product_description'] = array(
 			$language_id => array(
