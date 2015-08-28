@@ -387,6 +387,7 @@ class ControllerModuleExchange1c extends Controller {
 
 	public function manualImport() {
 		$this->load->language('module/exchange1c');
+		$enable_log = $this->config->get('exchange1c_full_log');
 
 		$cache = DIR_CACHE . 'exchange1c/';
 		$json = array();
@@ -428,44 +429,50 @@ class ControllerModuleExchange1c extends Controller {
 				if (strpos($buffer, 'ПакетПредложений')) {
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'offers.xml');
 					$this->modeImport('offers.xml');
-					//$this->log->write('End of modeImport(offers.xml)');
+					if ($enable_log)
+						$this->log->write('End of modeImport(offers.xml)');
 				}
 				else if (strpos($buffer, 'Документ')) {
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'orders.xml');
 					$this->modeImport('orders.xml');
-					//$this->log->write('End of modeImport(orders.xml)');
+					if ($enable_log)
+						$this->log->write('End of modeImport(orders.xml)');
 				}
 				else if (strpos($buffer, 'Классификатор')) {
 					$this->modeCatalogInit(false);
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'import.xml');
 					$this->modeImport('import.xml');
-					//$this->log->write('End of modeImport(import.xml)');
+					if ($enable_log) 
+						$this->log->write('End of modeImport(import.xml)');
 				
 				}
 				else {
-					$this->log->write('Ошибка при ручной загрузке файла');
+					if ($enable_log) 
+						$this->log->write('Ошибка при ручной загрузке файла');
 					$json['error'] = $this->language->get('text_upload_error');
 					exit;
 				}
 			}
-			//$this->log->write('modeImport comleted');
+			if ($enable_log) 
+				$this->log->write('modeImport comleted');
 			$json['success'] = $this->language->get('text_upload_success');
 		}
-		//$this->log->write('output result');
 		$this->response->setOutput(json_encode($json));
 	}
 	
 	public function modeCatalogInit($echo = true) {
-		
+		$enable_log = $this->config->get('exchange1c_full_log');
 		if ($echo){
 			if (!isset($this->request->cookie['key'])) {
-				$this->log->write('modeCatalogInit: no cookie key');
+				if ($enable_log) 
+					$this->log->write('modeCatalogInit: no cookie key');
 				echo "no cookie key";
 				return;
 			}
 	
 			if ($this->request->cookie['key'] != md5($this->config->get('exchange1c_password'))) {
-				$this->log->write('modeCatalogInit: password failure');
+				if ($enable_log) 
+					$this->log->write('modeCatalogInit: password failure');
 				echo "failure\n";
 				echo "Session error";
 				return;
@@ -475,17 +482,18 @@ class ControllerModuleExchange1c extends Controller {
 		$this->load->model('tool/exchange1c');
 		
 		// чистим кеш, убиваем старые данные
-		$this->log->write('modeCatalogInit: Чистим кэш');
+		if ($enable_log)
+			$this->log->write('modeCatalogInit: Чистим кэш');
 		$this->cleanCacheDir();
 		
 		// Проверяем есть ли БД для хранения промежуточных данных.
-		//$this->log->write('modeCatalogInit: Проверка базы данных - checkDbSheme()');
+		if ($enable_log)
+			$this->log->write('modeCatalogInit: Проверка базы данных - checkDbSheme()');
 		$this->model_tool_exchange1c->checkDbSheme();
 
 		$limit = 100000 * 1024;
 
 		if ($echo) {
-			$this->log->write('modeCatalogInit: Вывод echo включен');
 			echo "zip=no\n";
 			echo "file_limit=".$limit."\n";
 		}
@@ -502,7 +510,8 @@ class ControllerModuleExchange1c extends Controller {
 	}
 	
 	public function modeFile() {
-
+		$enable_log = $this->config->get('exchange1c_full_log');
+		
 		if (!isset($this->request->cookie['key'])) {
 			return;
 		}
@@ -517,8 +526,9 @@ class ControllerModuleExchange1c extends Controller {
 
 		// Проверяем на наличие имени файла
 		if (isset($this->request->get['filename'])) {
-			$this->log->write('Загрузка файла: ' . $this->request->get['filename'] . '...');
 			$uplod_file = $cache . $this->request->get['filename'];
+			if ($enable_log)
+				$this->log->write('Определено имя файла: ' . $uplod_file . '...');
 		}
 		else {
 			echo "failure\n";
@@ -565,7 +575,7 @@ class ControllerModuleExchange1c extends Controller {
 	}
 
 	public function modeImport($manual = false) {
-		
+		$enable_log = $this->config->get('exchange1c_full_log');
 		$cache = DIR_CACHE . 'exchange1c/';
 
 		if ($manual) {
@@ -587,35 +597,36 @@ class ControllerModuleExchange1c extends Controller {
 		// Определяем текущую локаль
 		$language_id = $this->model_tool_exchange1c->getLanguageId($this->config->get('config_language'));
 
-		//$this->log->write('Имя файла: ' . $filename);
-        
 		if (strpos($filename, 'import') !== false) {
 			
 			// Очищаем таблицы
 			$this->model_tool_exchange1c->flushDb(array(
 				'product' 		=> $this->config->get('exchange1c_flush_product'),
 				'category'		=> $this->config->get('exchange1c_flush_category'),
-				'manufacturer'	=> $this->config->get('exchange1c_flush_manufacturer'),
+				'manufacturer'		=> $this->config->get('exchange1c_flush_manufacturer'),
 				'attribute'		=> $this->config->get('exchange1c_flush_attribute'),
 				'full_log'		=> $this->config->get('exchange1c_full_log'),
 				'apply_watermark'	=> $this->config->get('exchange1c_apply_watermark'),
 				'quantity'		=> $this->config->get('exchange1c_flush_quantity')
 			));
 
-			//$this->log->write('modeImport: ' . $filename. ',' . $language_id);
+			if ($enable_log) 
+				$this->log->write('Вызов parseImport(' . $filename. ',' . $language_id .')');
 			$this->model_tool_exchange1c->parseImport($filename, $language_id);
 
 			if ($this->config->get('exchange1c_fill_parent_cats')) {
 				$this->model_tool_exchange1c->fillParentsCategories();
 			}
-            // Только если выбран способ deadcow_seo
+			
+			// Только если выбран способ deadcow_seo
 			if ($this->config->get('exchange1c_seo_url') == 1) {
-				//$this->log->write('modeImport: exchange1c_seo_url');
+				if ($enable_log)
+					$this->log->write('modeImport: exchange1c_seo_url');
+
 				$this->load->model('module/deadcow_seo');
 				$this->model_module_deadcow_seo->generateCategories($this->config->get('deadcow_seo_categories_template'), '', 'Russian', true, true);
 				$this->model_module_deadcow_seo->generateProducts($this->config->get('deadcow_seo_products_template'), '.html', 'Russian', true, true);
 				$this->model_module_deadcow_seo->generateManufacturers($this->config->get('deadcow_seo_manufacturers_template'), '', 'Russian', true, true);
-				
 				$this->model_module_deadcow_seo->generateProductsMetaKeywords($this->config->get('deadcow_seo_meta_template'), $this->config->get('deadcow_seo_yahoo_id'), 'Russian', false);
 				$this->model_module_deadcow_seo->generateTags($this->config->get('deadcow_seo_tags_template'), 'Russian', false);
 				$this->model_module_deadcow_seo->generateCategoriesMetaKeywords($this->config->get('deadcow_seo_categories_template'), 'Russian');
@@ -648,7 +659,6 @@ class ControllerModuleExchange1c extends Controller {
 		}
 
 		$this->cache->delete('product');
-		//$this->log->write('modeImport: return');
 		return;
 	}
 
@@ -667,13 +677,6 @@ class ControllerModuleExchange1c extends Controller {
 
 		$this->load->model('tool/exchange1c');
 
-		//$this->log->write('modeQueryOrders: model_tool_exchange1c->queryOrders');
-		//$this->log->write('Параметр: from_date='.$this->config->get('exchange1c_order_date')); 
-		//$this->log->write('Параметр: exchange_status='.$this->config->get('exchange1c_order_status_to_exchange')); 
-		//$this->log->write('Параметр: new_status='.$this->config->get('exchange1c_order_status')); 
-		//$this->log->write('Параметр: notify='.$this->config->get('exchange1c_order_notify')); 
-		//$this->log->write('Параметр: currency='.$this->config->get('exchange1c_order_currency') ? $this->config->get('exchange1c_order_currency') : 'руб.'); 
-			
 		$orders = $this->model_tool_exchange1c->queryOrders(
 			array(
 				 'from_date' 	=> $this->config->get('exchange1c_order_date')
