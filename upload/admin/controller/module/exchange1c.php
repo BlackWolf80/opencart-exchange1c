@@ -429,32 +429,22 @@ class ControllerModuleExchange1c extends Controller {
 				if (strpos($buffer, 'ПакетПредложений')) {
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'offers.xml');
 					$this->modeImport('offers.xml');
-					if ($enable_log)
-						$this->log->write('End of modeImport(offers.xml)');
 				}
 				else if (strpos($buffer, 'Документ')) {
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'orders.xml');
 					$this->modeImport('orders.xml');
-					if ($enable_log)
-						$this->log->write('End of modeImport(orders.xml)');
 				}
 				else if (strpos($buffer, 'Классификатор')) {
 					$this->modeCatalogInit(false);
 					move_uploaded_file($this->request->files['file']['tmp_name'], $cache . 'import.xml');
 					$this->modeImport('import.xml');
-					if ($enable_log) 
-						$this->log->write('End of modeImport(import.xml)');
-				
 				}
 				else {
-					if ($enable_log) 
-						$this->log->write('Ошибка при ручной загрузке файла');
+					$this->log->write('Ошибка при ручной загрузке файла');
 					$json['error'] = $this->language->get('text_upload_error');
 					exit;
 				}
 			}
-			if ($enable_log) 
-				$this->log->write('modeImport comleted');
 			$json['success'] = $this->language->get('text_upload_success');
 		}
 		$this->response->setOutput(json_encode($json));
@@ -482,13 +472,9 @@ class ControllerModuleExchange1c extends Controller {
 		$this->load->model('tool/exchange1c');
 		
 		// чистим кеш, убиваем старые данные
-		if ($enable_log)
-			$this->log->write('modeCatalogInit: Чистим кэш');
 		$this->cleanCacheDir();
 		
 		// Проверяем есть ли БД для хранения промежуточных данных.
-		if ($enable_log)
-			$this->log->write('modeCatalogInit: Проверка базы данных - checkDbSheme()');
 		$this->model_tool_exchange1c->checkDbSheme();
 
 		$limit = 100000 * 1024;
@@ -527,8 +513,6 @@ class ControllerModuleExchange1c extends Controller {
 		// Проверяем на наличие имени файла
 		if (isset($this->request->get['filename'])) {
 			$uplod_file = $cache . $this->request->get['filename'];
-			if ($enable_log)
-				$this->log->write('Определено имя файла: ' . $uplod_file . '...');
 		}
 		else {
 			echo "failure\n";
@@ -610,8 +594,6 @@ class ControllerModuleExchange1c extends Controller {
 				'quantity'		=> $this->config->get('exchange1c_flush_quantity')
 			));
 
-			if ($enable_log) 
-				$this->log->write('Вызов parseImport(' . $filename. ',' . $language_id .')');
 			$this->model_tool_exchange1c->parseImport($filename, $language_id);
 
 			if ($this->config->get('exchange1c_fill_parent_cats')) {
@@ -620,8 +602,6 @@ class ControllerModuleExchange1c extends Controller {
 			
 			// Только если выбран способ deadcow_seo
 			if ($this->config->get('exchange1c_seo_url') == 1) {
-				if ($enable_log)
-					$this->log->write('modeImport: exchange1c_seo_url');
 
 				$this->load->model('module/deadcow_seo');
 				$this->model_module_deadcow_seo->generateCategories($this->config->get('deadcow_seo_categories_template'), '', 'Russian', true, true);
