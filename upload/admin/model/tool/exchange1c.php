@@ -1517,7 +1517,6 @@ class ModelToolExchange1c extends Model {
 
 		// добавляем другие категории в которых товар был на сайте к категории 1С
 		$product_old = array_merge($product_old, array('product_category' => $this->model_catalog_product->getProductCategories($product_id)));
-		$this->log->write($product_old['product_category']);
 
 		//Редактируем продукт
 		$product_id = $this->model_catalog_product->editProduct($product_id, $product_old);
