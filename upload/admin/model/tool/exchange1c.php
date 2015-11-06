@@ -760,10 +760,6 @@ class ModelToolExchange1c extends Model {
 		if ($enable_log)
 			$this->log->write('Загрузка категорий...');
 		if($xml->Классификатор->Группы) $this->insertCategory($xml->Классификатор->Группы->Группа, 0, $language_id);
-		if ($enable_log) {
-			$this->log->write('CATEGORIES:');
-			$this->log->write($this->CATEGORIES);
-		}
 
 		if ($this->VERSION_XML == '2.03') {
 			// Свойства
@@ -1438,8 +1434,6 @@ class ModelToolExchange1c extends Model {
 		
 
 		if ($product_id) {
-			//$this->log->write("Обновление товара...");
-			//$this->log->write($product);
 			$this->updateProduct($product, $product_id, $language_id);
 		}
 		else {
